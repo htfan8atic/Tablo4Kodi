@@ -13,7 +13,7 @@ Older (2nd/3rd Gen) Tablos are not supported.
 ## Before you start
 
 1. Find your Tablo's IP address in your router's or mesh app's list of connected devices.
-2. Turn on **address reservation** (DHCP reservation / fixed IP) for it in that same app.
+2. Turn on **address reservation** (DHCP reservation / fixed IP) for it in that same app (recommended).
 3. From the Kodi device, `ping <Tablo IP>` should get replies.
 
 Current 4th Gen firmware takes the add-on's requests on **port 8887**.
