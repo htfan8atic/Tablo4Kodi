@@ -12,8 +12,8 @@ Older (2nd/3rd Gen) Tablos are not supported.
 
 ## Before you start
 
-1. Find your Tablo's IP address in your router's or mesh app's list of connected devices.
-2. Turn on **address reservation** (DHCP reservation / fixed IP) for it in that same app (recommended).
+1. Find your Tablo's IP address in your router's or mesh app's list of connected devices. Or, more easily in settings in the Tablo app for iOS or Google Play mobile device
+2. Turn on **address reservation** (DHCP reservation / fixed IP) for it in that same app (recommended as your Tablo's IP address could change after a firmware update, power failure, etc.).
 3. From a computer on the same network, opening Command Prompt (press Windows key + R, type cmd, press Enter) and running `ping <Tablo IP>` should get replies.
 
 Current 4th Gen firmware takes the add-on's requests on **port 8887**.
