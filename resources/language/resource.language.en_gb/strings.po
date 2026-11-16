@@ -1,0 +1,46 @@
+# Kodi Media Center language file
+# Addon id: plugin.video.tablo4g
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Language: en_GB\n"
+
+msgctxt "#30000"
+msgid "Tablo account"
+msgstr ""
+
+msgctxt "#30001"
+msgid "Email"
+msgstr ""
+
+msgctxt "#30002"
+msgid "Password"
+msgstr ""
+
+msgctxt "#30003"
+msgid "Device name (if you have more than one Tablo)"
+msgstr ""
+
+msgctxt "#30004"
+msgid "Tablo IP address override (optional)"
+msgstr ""
+
+msgctxt "#30010"
+msgid "Live TV & guide"
+msgstr ""
+
+msgctxt "#30011"
+msgid "Include FAST streaming channels"
+msgstr ""
+
+msgctxt "#30012"
+msgid "Days of guide data"
+msgstr ""
+
+msgctxt "#30013"
+msgid "Refresh guide every (hours)"
+msgstr ""
+
+msgctxt "#30014"
+msgid "Local server port"
+msgstr ""
