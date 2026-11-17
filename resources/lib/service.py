@@ -146,6 +146,8 @@ def refresh_guide(tablo):
     include_fast = setting_bool("include_fast")
     days = max(1, min(14, setting_int("guide_days", 3)))
     channels = tablo.channels(include_fast=include_fast)
+    from .tablo import LOGO_KINDS_SEEN
+    log("logo versions offered by Tablo: {}".format(", ".join(sorted(LOGO_KINDS_SEEN)) or "none"))
     style = logo_style()
     made = logocache.build(channels, tablo.s, profile_dir(), style, log)
     if made:

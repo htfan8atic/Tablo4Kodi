@@ -41,6 +41,28 @@ def _mask(email):
         return "***"
 
 
+# Kodi skins are dark, so prefer the logo versions made for dark backgrounds (colour on dark),
+# then larger before smaller, then whatever exists.
+LOGO_PREFERENCE = ("darkLarge", "darkMedium", "dark", "darkSmall",
+                   "lightLarge", "lightMedium", "light", "lightSmall")
+LOGO_KINDS_SEEN = set()
+
+
+def pick_logo(logos):
+    by_kind = {}
+    for lg in logos:
+        if lg.get("url"):
+            by_kind.setdefault(lg.get("kind") or "", lg["url"])
+            LOGO_KINDS_SEEN.add(lg.get("kind") or "?")
+    for kind in LOGO_PREFERENCE:
+        if kind in by_kind:
+            return by_kind[kind]
+    for kind, url in by_kind.items():
+        if kind.lower().startswith("dark"):
+            return url
+    return next(iter(by_kind.values()), "")
+
+
 class TabloError(Exception):
     pass
 
@@ -274,14 +296,7 @@ class Tablo(object):
             if kind == "ott" and not include_fast:
                 continue
             info = ch.get(kind) or ch.get("ota") or ch.get("ott") or {}
-            logos = ch.get("logos") or []
-            logo = ""
-            for lg in logos:
-                if lg.get("kind") == "lightLarge":
-                    logo = lg.get("url", "")
-                    break
-            if not logo and logos:
-                logo = logos[0].get("url", "")
+            logo = pick_logo(ch.get("logos") or [])
             major = info.get("major") or 0
             minor = info.get("minor") or 0
             call = info.get("callSign") or ch.get("name") or ch["identifier"]

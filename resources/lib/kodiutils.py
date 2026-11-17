@@ -68,4 +68,4 @@ def base_url():
 
 def logo_style():
     """0 = original logos, 1 = same size, 2 = same size and white."""
-    return setting_int("logo_style", 2)
+    return setting_int("logo_style", 1)
