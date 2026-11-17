@@ -60,3 +60,7 @@ msgstr ""
 msgctxt "#30018"
 msgid "Same size, white"
 msgstr ""
+
+msgctxt "#30019"
+msgid "Colour on a tile (readable on any skin)"
+msgstr ""

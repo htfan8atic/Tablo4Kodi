@@ -6,12 +6,12 @@ import os
 
 from . import logos
 
-ORIGINAL, SAME_SIZE, WHITE = 0, 1, 2
+ORIGINAL, SAME_SIZE, WHITE, TILE = 0, 1, 2, 3
 
 
 def _key(urls, mode):
     # The key changes when the logo URLs or style change, so Kodi's image cache never shows a stale one.
-    return hashlib.sha1("{}|{}|v3".format("|".join(urls), mode).encode("utf-8")).hexdigest()[:16]
+    return hashlib.sha1("{}|{}|v4".format("|".join(urls), mode).encode("utf-8")).hexdigest()[:16]
 
 
 def _candidates(c):
@@ -52,7 +52,7 @@ def build(channels, session, profile, mode, log=lambda m: None):
             data = r.content
             if mode != ORIGINAL:
                 try:
-                    data = logos.normalize(r.content, white=(mode == WHITE))
+                    data = logos.normalize(r.content, white=(mode == WHITE), plate=(mode == TILE))
                 except logos.Unsupported as e:
                     log("logo {} kept as-is ({})".format(c.get("call_sign"), e))
             tmp = p + ".tmp"

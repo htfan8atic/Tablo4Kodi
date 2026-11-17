@@ -67,5 +67,5 @@ def base_url():
 
 
 def logo_style():
-    """0 = original logos, 1 = same size, 2 = same size and white."""
-    return setting_int("logo_style", 1)
+    """0 = original, 1 = same size, 2 = same size and white, 3 = colour on a tile (default)."""
+    return setting_int("logo_style", 3)
