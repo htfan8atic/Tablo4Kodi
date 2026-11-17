@@ -135,7 +135,7 @@ class Tablo(object):
         d = os.path.dirname(self.state_file)
         if d and not os.path.isdir(d):
             os.makedirs(d)
-        tmp = self.state_file + ".tmp"
+        tmp = "{}.{}.tmp".format(self.state_file, uuid.uuid4().hex[:8])
         with open(tmp, "w") as f:
             json.dump(self.state, f)
         os.replace(tmp, self.state_file)

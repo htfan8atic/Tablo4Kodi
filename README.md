@@ -5,7 +5,7 @@ Live TV, a grid TV guide, recordings and recording scheduling for **Tablo 4th Ge
 - **Live TV + guide** appear in Kodi's own **TV** section, through *PVR IPTV Simple Client*.
 - **Video add-on** (Add-ons → Video add-ons → Tablo (4th Gen)) for recordings, scheduling and status.
 
-Needs Kodi 19 or newer (tested on Kodi 22 for Windows; should also work on LibreELEC and CoreELEC,
+Needs Kodi 19 or newer (tested on Kodi 22 for Windows and LibreELEC; should also work on CoreELEC,
 see below), a Tablo 4th Gen already set up in the
 official Tablo app, and the Kodi device on the same home network as the Tablo.
 Older (2nd/3rd Gen) Tablos are not supported.
@@ -89,8 +89,8 @@ email is masked in the log; your Tablo's local IP is not.
 
 ## LibreELEC and CoreELEC
 
-The add-on is plain Python, so the same zip and steps work on LibreELEC 12 and CoreELEC 21 (both
-Kodi 21). Its dependencies come from the official Kodi repository. Differences:
+The add-on is plain Python, so the same zip and steps work on LibreELEC and CoreELEC (tested on
+LibreELEC with Kodi 22). The Tablo sends antenna channels as MPEG-2 video with Dolby Digital audio. Its dependencies come from the official Kodi repository. Differences:
 
 - **Log file:** `/storage/.kodi/temp/kodi.log`. From another computer, use the network share
   `\\<box IP>\Logfiles`. On LibreELEC, **LibreELEC Settings → System → Logs** can upload it and give you a link.

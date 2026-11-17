@@ -3,6 +3,7 @@
 
 import hashlib
 import os
+import uuid
 
 from . import logos
 
@@ -55,7 +56,7 @@ def build(channels, session, profile, mode, log=lambda m: None):
                     data = logos.normalize(r.content, white=(mode == WHITE), plate=(mode == TILE))
                 except logos.Unsupported as e:
                     log("logo {} kept as-is ({})".format(c.get("call_sign"), e))
-            tmp = p + ".tmp"
+            tmp = "{}.{}.tmp".format(p, uuid.uuid4().hex[:8])
             with open(tmp, "wb") as f:
                 f.write(data)
             os.replace(tmp, p)

@@ -15,7 +15,8 @@ import xbmcplugin
 
 from . import guide, logocache
 from .kodiutils import addon, base_url, get_tablo, log, logo_style, notify, profile_dir
-from .service import PLAYING_PROP, refresh_guide
+from .service import (PLAYING_PROP, REFRESH_DONE, REFRESH_REQUEST, SERVICE_ALIVE,
+                      refresh_guide)
 from .tablo import AuthError, TabloError
 
 HANDLE = int(sys.argv[1]) if len(sys.argv) > 1 and sys.argv[1].lstrip("-").isdigit() else -1
@@ -490,8 +491,33 @@ def diag(tablo):
 
 
 def refresh(tablo):
-    n = refresh_guide(tablo)
-    notify("Guide refreshed ({} channels)".format(n))
+    """Ask the background service to refresh (so two refreshes never overlap); run it here only
+    if the service isn't running."""
+    try:
+        alive = time.time() - int(HOME.getProperty(SERVICE_ALIVE) or 0) < 10
+    except ValueError:
+        alive = False
+    if not alive:
+        n = refresh_guide(tablo)
+        return notify("Guide refreshed ({} channels)".format(n))
+    token = str(time.time())
+    HOME.clearProperty(REFRESH_DONE)
+    HOME.setProperty(REFRESH_REQUEST, token)
+    dlg = xbmcgui.DialogProgressBG()
+    dlg.create("Tablo", "Refreshing TV guide...")
+    try:
+        deadline = time.time() + 300
+        while time.time() < deadline:
+            done = HOME.getProperty(REFRESH_DONE)
+            if done.startswith(token + "|"):
+                result = done.split("|", 1)[1]
+                if result.startswith("error"):
+                    return notify("Guide refresh failed: " + result[7:], error=True)
+                return notify("Guide refreshed ({} channels)".format(result))
+            xbmc.sleep(500)
+        notify("Guide refresh is taking a while; it will finish in the background")
+    finally:
+        dlg.close()
 
 
 def setup_iptv():

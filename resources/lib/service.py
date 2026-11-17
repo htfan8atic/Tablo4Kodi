@@ -154,7 +154,51 @@ def reload_iptv_simple():
         xbmc.sleep(1500)
 
 
-def refresh_guide(tablo):
+REFRESH_REQUEST = "tablo4g.refresh_request"   # set by the plugin: a token
+REFRESH_DONE = "tablo4g.refresh_done"         # set by the service: "<token>|<channels or error>"
+SERVICE_ALIVE = "tablo4g.service_alive"       # heartbeat, so the plugin knows the service is there
+LOCK = "refresh.lock"
+LOCK_STALE = 15 * 60
+
+
+class RefreshBusy(Exception):
+    pass
+
+
+def _lock(wait=120):
+    """Only one guide refresh at a time, across the service and plugin."""
+    path = os.path.join(profile_dir(), LOCK)
+    deadline = time.time() + wait
+    while True:
+        try:
+            fd = os.open(path, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+            os.write(fd, str(time.time()).encode())
+            os.close(fd)
+            return path
+        except OSError:
+            try:
+                if time.time() - os.path.getmtime(path) > LOCK_STALE:  # left by a crash
+                    os.remove(path)
+                    continue
+            except OSError:
+                continue
+            if time.time() >= deadline:
+                raise RefreshBusy("another guide refresh is still running")
+            xbmc.sleep(500)
+
+
+def refresh_guide(tablo, wait=120):
+    path = _lock(wait)
+    try:
+        return _refresh_guide(tablo)
+    finally:
+        try:
+            os.remove(path)
+        except OSError:
+            pass
+
+
+def _refresh_guide(tablo):
     """Fetch channels + airings and write M3U / XMLTV into the profile folder."""
     include_fast = setting_bool("include_fast")
     days = max(1, min(14, setting_int("guide_days", 3)))
@@ -185,7 +229,7 @@ def refresh_guide(tablo):
     except (IOError, OSError):
         m3u_changed = False  # first run: IPTV Simple hasn't been set up against it yet
     for name, data in ((M3U, m3u), (EPG, guide.build_xmltv(channels, airings))):
-        tmp = os.path.join(pd, name + ".tmp")
+        tmp = os.path.join(pd, "{}.{}.{}.tmp".format(name, os.getpid(), threading.get_ident()))
         with open(tmp, "w", encoding="utf-8") as f:
             f.write(data)
         os.replace(tmp, os.path.join(pd, name))
@@ -262,17 +306,27 @@ def run():
                 Handler.tablo = tablo
                 player.tablo = tablo
                 next_refresh = 0
+            HOME.setProperty(SERVICE_ALIVE, str(int(time.time())))
+            request = HOME.getProperty(REFRESH_REQUEST)
+            if request:
+                HOME.clearProperty(REFRESH_REQUEST)
+                next_refresh = 0
             if time.time() >= next_refresh:
                 if tablo.email and tablo.password:
                     try:
                         log("refreshing guide...")
-                        refresh_guide(tablo)
+                        n = refresh_guide(tablo)
                         next_refresh = time.time() + 3600 * max(1, setting_int("refresh_hours", 6))
+                        result = str(n)
                     except Exception as e:
                         log("guide refresh failed: {}".format(e), xbmc.LOGERROR)
                         next_refresh = time.time() + 600
+                        result = "error: {}".format(e)
                 else:
                     next_refresh = time.time() + 60
+                    result = "error: enter your Tablo email and password in settings"
+                if request:
+                    HOME.setProperty(REFRESH_DONE, "{}|{}".format(request, result))
             player.tick()
             if monitor.waitForAbort(1):
                 break
