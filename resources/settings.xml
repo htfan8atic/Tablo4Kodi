@@ -39,6 +39,18 @@
           <default>false</default>
           <control type="toggle"/>
         </setting>
+        <setting id="logo_style" type="integer" label="30015">
+          <level>0</level>
+          <default>2</default>
+          <constraints>
+            <options>
+              <option label="30016">0</option>
+              <option label="30017">1</option>
+              <option label="30018">2</option>
+            </options>
+          </constraints>
+          <control type="spinner" format="string"/>
+        </setting>
         <setting id="guide_days" type="integer" label="30012">
           <level>0</level>
           <default>3</default>

@@ -44,3 +44,19 @@ msgstr ""
 msgctxt "#30014"
 msgid "Local server port"
 msgstr ""
+
+msgctxt "#30015"
+msgid "Channel logos"
+msgstr ""
+
+msgctxt "#30016"
+msgid "Original"
+msgstr ""
+
+msgctxt "#30017"
+msgid "Same size"
+msgstr ""
+
+msgctxt "#30018"
+msgid "Same size, white"
+msgstr ""

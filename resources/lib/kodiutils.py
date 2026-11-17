@@ -64,3 +64,8 @@ def server_port():
 
 def base_url():
     return "http://127.0.0.1:{}".format(server_port())
+
+
+def logo_style():
+    """0 = original logos, 1 = same size, 2 = same size and white."""
+    return setting_int("logo_style", 2)

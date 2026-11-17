@@ -13,8 +13,8 @@ import xbmcaddon
 import xbmcgui
 import xbmcplugin
 
-from . import guide
-from .kodiutils import addon, base_url, get_tablo, log, notify, profile_dir
+from . import guide, logocache
+from .kodiutils import addon, base_url, get_tablo, log, logo_style, notify, profile_dir
 from .service import PLAYING_PROP, refresh_guide
 from .tablo import AuthError, TabloError
 
@@ -83,7 +83,9 @@ def root():
 # ---------------------------------------------------------------- live
 def channels(tablo):
     from .kodiutils import setting_bool
-    for c in tablo.channels(include_fast=setting_bool("include_fast")):
+    chans = logocache.apply(tablo.channels(include_fast=setting_bool("include_fast")),
+                            profile_dir(), logo_style(), base_url())
+    for c in chans:
         label = "{} {}".format(c["number"], c["call_sign"]).strip()
         if c["network"]:
             label += "  [COLOR grey]{}[/COLOR]".format(c["network"])

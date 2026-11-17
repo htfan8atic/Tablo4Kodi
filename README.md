@@ -64,6 +64,11 @@ you usually have to enter them by hand.
 | What's scheduled / conflicts | Video add-on → Upcoming recordings |
 | Tuners and storage | Video add-on → Tablo status |
 
+**Channel logos:** by default the add-on makes every channel logo the same size and white, so they
+line up neatly in Kodi's TV section. Change it under the add-on's Settings → *Live TV & guide* →
+**Channel logos** (*Original*, *Same size*, or *Same size, white*). Kodi picks up the new logos at the
+next guide refresh; use **Refresh TV guide now** and restart Kodi to see them straight away.
+
 ## Troubleshooting
 
 | Symptom | Fix |

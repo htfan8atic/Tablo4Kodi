@@ -22,8 +22,9 @@ from urllib.parse import urljoin
 import xbmc
 import xbmcgui
 
-from . import guide
-from .kodiutils import base_url, get_tablo, log, profile_dir, server_port, setting_bool, setting_int
+from . import guide, logocache
+from .kodiutils import (base_url, get_tablo, log, logo_style, profile_dir, server_port,
+                        setting_bool, setting_int)
 from .tablo import TabloError
 
 M3U = "playlist.m3u"
@@ -78,6 +79,8 @@ class Handler(BaseHTTPRequestHandler):
         path = self.path.split("?", 1)[0]
         if re.match(r"^/live/", path):
             ctype = "application/vnd.apple.mpegurl"
+        elif re.match(r"^/logo/", path):
+            ctype = "image/png"
         elif path == "/" + M3U:
             ctype = "audio/x-mpegurl"
         elif path == "/" + EPG:
@@ -94,6 +97,15 @@ class Handler(BaseHTTPRequestHandler):
             return self._file(M3U, "audio/x-mpegurl")
         if path == "/" + EPG:
             return self._file(EPG, "application/xml")
+        m = re.match(r"^/logo/([0-9a-f]+)\.png$", path)
+        if m:
+            p = logocache.path_for(profile_dir(), m.group(1))
+            if p and os.path.exists(p):
+                with open(p, "rb") as f:
+                    data = f.read()
+                ctype = "image/png" if data[:4] == b"\x89PNG" else "image/jpeg"
+                return self._send(200, data, ctype)
+            return self._send(404, "No such logo")
         m = re.match(r"^/live/([^/]+?)(?:\.m3u8)?$", path)
         if m:
             return self._live(m.group(1))
@@ -134,6 +146,11 @@ def refresh_guide(tablo):
     include_fast = setting_bool("include_fast")
     days = max(1, min(14, setting_int("guide_days", 3)))
     channels = tablo.channels(include_fast=include_fast)
+    style = logo_style()
+    made = logocache.build(channels, tablo.s, profile_dir(), style, log)
+    if made:
+        log("prepared {} channel logos".format(made))
+    logocache.apply(channels, profile_dir(), style, base_url())
     today = datetime.date.today()
     airings = {}
     for c in channels:
