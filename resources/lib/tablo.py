@@ -41,26 +41,24 @@ def _mask(email):
         return "***"
 
 
-# Kodi skins are dark, so prefer the logo versions made for dark backgrounds (colour on dark),
-# then larger before smaller, then whatever exists.
-LOGO_PREFERENCE = ("darkLarge", "darkMedium", "dark", "darkSmall",
-                   "lightLarge", "lightMedium", "light", "lightSmall")
+# Tablo offers each logo as originalLarge (full colour, as in the Tablo apps), lightLarge and
+# darkLarge (single-colour versions). Prefer colour; keep the others as fallbacks because a
+# version is sometimes missing on Tablo's CDN.
+LOGO_PREFERENCE = ("originalLarge", "original", "originalMedium", "originalSmall",
+                   "lightLarge", "darkLarge")
 LOGO_KINDS_SEEN = set()
 
 
-def pick_logo(logos):
+def pick_logos(logos):
+    """All logo URLs for a channel, best first."""
     by_kind = {}
     for lg in logos:
         if lg.get("url"):
             by_kind.setdefault(lg.get("kind") or "", lg["url"])
             LOGO_KINDS_SEEN.add(lg.get("kind") or "?")
-    for kind in LOGO_PREFERENCE:
-        if kind in by_kind:
-            return by_kind[kind]
-    for kind, url in by_kind.items():
-        if kind.lower().startswith("dark"):
-            return url
-    return next(iter(by_kind.values()), "")
+    ordered = [by_kind[k] for k in LOGO_PREFERENCE if k in by_kind]
+    ordered += [u for k, u in sorted(by_kind.items()) if u not in ordered]
+    return ordered
 
 
 class TabloError(Exception):
@@ -296,7 +294,7 @@ class Tablo(object):
             if kind == "ott" and not include_fast:
                 continue
             info = ch.get(kind) or ch.get("ota") or ch.get("ott") or {}
-            logo = pick_logo(ch.get("logos") or [])
+            logos = pick_logos(ch.get("logos") or [])
             major = info.get("major") or 0
             minor = info.get("minor") or 0
             call = info.get("callSign") or ch.get("name") or ch["identifier"]
@@ -309,7 +307,8 @@ class Tablo(object):
                 "call_sign": call,
                 "network": info.get("network") or "",
                 "name": ch.get("name") or call,
-                "logo": logo,
+                "logo": logos[0] if logos else "",
+                "logos": logos,
             })
         out.sort(key=lambda c: (0, c["major"], c["minor"], "") if c["major"]
                  else (1, 0, 0, c["call_sign"].lower()))

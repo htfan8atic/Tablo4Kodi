@@ -103,7 +103,8 @@ class Handler(BaseHTTPRequestHandler):
             if p and os.path.exists(p):
                 with open(p, "rb") as f:
                     data = f.read()
-                ctype = "image/png" if data[:4] == b"\x89PNG" else "image/jpeg"
+                ctype = ("image/png" if data[:4] == b"\x89PNG" else
+                         "image/svg+xml" if data.lstrip()[:1] == b"<" else "image/jpeg")
                 return self._send(200, data, ctype)
             return self._send(404, "No such logo")
         m = re.match(r"^/live/([^/]+?)(?:\.m3u8)?$", path)
@@ -141,6 +142,18 @@ class Server(object):
         self.httpd.server_close()
 
 
+def reload_iptv_simple():
+    """IPTV Simple reads the channel list once at startup. When channels or logos change,
+    restart it so Kodi shows them now instead of after the next Kodi restart."""
+    if not xbmc.getCondVisibility("System.AddonIsEnabled(pvr.iptvsimple)"):
+        return
+    log("channel list changed; reloading IPTV Simple")
+    for enabled in ("false", "true"):
+        xbmc.executeJSONRPC('{"jsonrpc":"2.0","id":1,"method":"Addons.SetAddonEnabled",'
+                            '"params":{"addonid":"pvr.iptvsimple","enabled":%s}}' % enabled)
+        xbmc.sleep(1500)
+
+
 def refresh_guide(tablo):
     """Fetch channels + airings and write M3U / XMLTV into the profile folder."""
     include_fast = setting_bool("include_fast")
@@ -165,13 +178,20 @@ def refresh_guide(tablo):
                 log("airings {} {} failed: {}".format(c["id"], day, e), xbmc.LOGWARNING)
         airings[c["id"]] = lst
     pd = profile_dir()
-    for name, data in ((M3U, guide.build_m3u(channels, base_url())),
-                       (EPG, guide.build_xmltv(channels, airings))):
+    m3u = guide.build_m3u(channels, base_url())
+    try:
+        with open(os.path.join(pd, M3U), encoding="utf-8") as f:
+            m3u_changed = f.read() != m3u
+    except (IOError, OSError):
+        m3u_changed = False  # first run: IPTV Simple hasn't been set up against it yet
+    for name, data in ((M3U, m3u), (EPG, guide.build_xmltv(channels, airings))):
         tmp = os.path.join(pd, name + ".tmp")
         with open(tmp, "w", encoding="utf-8") as f:
             f.write(data)
         os.replace(tmp, os.path.join(pd, name))
     log("guide refreshed: {} channels, {} days".format(len(channels), days))
+    if m3u_changed:
+        reload_iptv_simple()
     return len(channels)
 
 

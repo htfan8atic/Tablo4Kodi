@@ -9,9 +9,13 @@ from . import logos
 ORIGINAL, SAME_SIZE, WHITE = 0, 1, 2
 
 
-def _key(url, mode):
-    # The key changes when the logo URL or style changes, so Kodi's image cache never shows a stale one.
-    return hashlib.sha1("{}|{}|v2".format(url, mode).encode("utf-8")).hexdigest()[:16]
+def _key(urls, mode):
+    # The key changes when the logo URLs or style change, so Kodi's image cache never shows a stale one.
+    return hashlib.sha1("{}|{}|v3".format("|".join(urls), mode).encode("utf-8")).hexdigest()[:16]
+
+
+def _candidates(c):
+    return c.get("logos") or ([c["logo"]] if c.get("logo") else [])
 
 
 def cache_dir(profile):
@@ -28,43 +32,44 @@ def path_for(profile, key):
 
 
 def build(channels, session, profile, mode, log=lambda m: None):
-    """Download and normalize any logos not cached yet. Returns how many were made."""
-    if mode == ORIGINAL:
-        return 0
+    """Download and normalize any logos not cached yet, trying each logo version in turn.
+    Returns how many were made. ORIGINAL keeps the image untouched (only the fallback applies)."""
     made = 0
     for c in channels:
-        url = c.get("logo")
-        if not url:
+        urls = _candidates(c)
+        if not urls:
             continue
-        p = path_for(profile, _key(url, mode))
+        p = path_for(profile, _key(urls, mode))
         if os.path.exists(p):
             continue
-        try:
-            r = session.get(url, timeout=(4, 20))
-            r.raise_for_status()
+        for url in urls:
             try:
-                data = logos.normalize(r.content, white=(mode == WHITE))
-            except logos.Unsupported as e:
-                log("logo {} kept as-is ({})".format(c.get("call_sign"), e))
-                data = r.content
+                r = session.get(url, timeout=(4, 20))
+                r.raise_for_status()
+            except Exception as e:  # missing on Tablo's CDN: try the next version
+                log("logo {} not available at {} ({})".format(c.get("call_sign"), url, e))
+                continue
+            data = r.content
+            if mode != ORIGINAL:
+                try:
+                    data = logos.normalize(r.content, white=(mode == WHITE))
+                except logos.Unsupported as e:
+                    log("logo {} kept as-is ({})".format(c.get("call_sign"), e))
             tmp = p + ".tmp"
             with open(tmp, "wb") as f:
                 f.write(data)
             os.replace(tmp, p)
             made += 1
-        except Exception as e:  # a missing logo must never break the guide
-            log("logo {} failed: {}".format(c.get("call_sign"), e))
+            break
     return made
 
 
 def apply(channels, profile, mode, base_url):
-    """Point each channel's logo at the cached uniform version when it exists."""
-    if mode == ORIGINAL:
-        return channels
+    """Point each channel's logo at the cached version when it exists."""
     for c in channels:
-        url = c.get("logo")
-        if url:
-            key = _key(url, mode)
+        urls = _candidates(c)
+        if urls:
+            key = _key(urls, mode)
             if os.path.exists(path_for(profile, key)):
                 c["logo"] = "{}/logo/{}.png".format(base_url, key)
     return channels

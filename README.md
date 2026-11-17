@@ -64,11 +64,10 @@ you usually have to enter them by hand.
 | What's scheduled / conflicts | Video add-on → Upcoming recordings |
 | Tuners and storage | Video add-on → Tablo status |
 
-**Channel logos:** by default the add-on shows each channel's colour logo (the version made for dark
-backgrounds, as in the Tablo apps), trimmed and resized so they're all the same size. Change it under the
-add-on's Settings → *Live TV & guide* → **Channel logos** (*Original*, *Same size*, or *Same size, white*).
-Kodi picks up the new logos at the next guide refresh; use **Refresh TV guide now** and restart Kodi to
-see them straight away.
+**Channel logos:** by default the add-on shows each channel's full-colour logo (the same ones the
+Tablo apps use), trimmed and resized so they're all the same size. Change it under the add-on's
+Settings → *Live TV & guide* → **Channel logos** (*Original*, *Same size*, or *Same size, white*).
+When the logos change, the add-on reloads IPTV Simple so Kodi shows them straight away.
 
 ## Troubleshooting
 
