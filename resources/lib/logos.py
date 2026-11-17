@@ -196,7 +196,33 @@ def _key_solid_box(w, h, rgba, box):
     if left < opaque * 4 * 0.03:  # keying removed (almost) everything: it was just a shape
         rgba[3::4] = saved
         return False
+    _drop_rim(w, h, rgba, saved, max(2, int(min(x1 - x0, y1 - y0) * 0.04)))
     return True
+
+
+def _drop_rim(w, h, rgba, mask, r, thresh=24):
+    """Remove what's left of the badge's outline: anything within r pixels of the badge's
+    outer edge (measured along rows and columns), so only the lettering inside remains."""
+    rim = bytearray(w * h)
+    for y in range(h):
+        row = mask[y * w:(y + 1) * w]
+        xs = [x for x in range(w) if row[x] >= thresh]
+        if xs:
+            for x in range(xs[0], min(w, xs[0] + r)):
+                rim[y * w + x] = 1
+            for x in range(max(0, xs[-1] - r + 1), xs[-1] + 1):
+                rim[y * w + x] = 1
+    for x in range(w):
+        col = mask[x::w]
+        ys = [y for y in range(h) if col[y] >= thresh]
+        if ys:
+            for y in range(ys[0], min(h, ys[0] + r)):
+                rim[y * w + x] = 1
+            for y in range(max(0, ys[-1] - r + 1), ys[-1] + 1):
+                rim[y * w + x] = 1
+    for i in range(w * h):
+        if rim[i]:
+            rgba[i * 4 + 3] = 0
 
 
 def _bbox(w, h, rgba, thresh=24):

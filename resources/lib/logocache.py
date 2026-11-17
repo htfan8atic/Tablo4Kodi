@@ -11,7 +11,7 @@ ORIGINAL, SAME_SIZE, WHITE = 0, 1, 2
 
 def _key(url, mode):
     # The key changes when the logo URL or style changes, so Kodi's image cache never shows a stale one.
-    return hashlib.sha1("{}|{}|v1".format(url, mode).encode("utf-8")).hexdigest()[:16]
+    return hashlib.sha1("{}|{}|v2".format(url, mode).encode("utf-8")).hexdigest()[:16]
 
 
 def cache_dir(profile):
