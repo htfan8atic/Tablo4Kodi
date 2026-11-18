@@ -125,10 +125,31 @@ class Handler(BaseHTTPRequestHandler):
             self._send(503, str(e))
 
 
+class _HTTPServer(ThreadingHTTPServer):
+    allow_reuse_address = True
+    daemon_threads = True
+
+
 class Server(object):
-    def __init__(self, tablo):
+    def __init__(self, tablo, monitor=None, wait=60):
         Handler.tablo = tablo
-        self.httpd = ThreadingHTTPServer(("127.0.0.1", server_port()), Handler)
+        # After an add-on update the previous version's service may still be shutting down
+        # and holding the port for a few seconds: wait for it instead of crashing.
+        deadline = time.time() + wait
+        while True:
+            try:
+                self.httpd = _HTTPServer(("127.0.0.1", server_port()), Handler)
+                break
+            except OSError as e:
+                if time.time() >= deadline or (monitor and monitor.abortRequested()):
+                    raise
+                log("port {} busy ({}); waiting for the previous service to stop".format(
+                    server_port(), e), xbmc.LOGWARNING)
+                if monitor:
+                    if monitor.waitForAbort(1):
+                        raise
+                else:
+                    time.sleep(1)
         self.httpd.daemon_threads = True
         self.thread = threading.Thread(target=self.httpd.serve_forever)
         self.thread.daemon = True
@@ -165,6 +186,10 @@ class RefreshBusy(Exception):
     pass
 
 
+class Aborted(Exception):
+    """Kodi asked the service to stop (shutdown, add-on update or disable)."""
+
+
 def _lock(wait=120):
     """Only one guide refresh at a time, across the service and plugin."""
     path = os.path.join(profile_dir(), LOCK)
@@ -187,10 +212,12 @@ def _lock(wait=120):
             xbmc.sleep(500)
 
 
-def refresh_guide(tablo, wait=120):
+def refresh_guide(tablo, wait=120, abort=None):
+    """abort: callable returning True when Kodi wants us to stop; checked between requests
+    so an add-on update never has to wait for a full guide download."""
     path = _lock(wait)
     try:
-        return _refresh_guide(tablo)
+        return _refresh_guide(tablo, abort or (lambda: False))
     finally:
         try:
             os.remove(path)
@@ -198,7 +225,7 @@ def refresh_guide(tablo, wait=120):
             pass
 
 
-def _refresh_guide(tablo):
+def _refresh_guide(tablo, abort):
     """Fetch channels + airings and write M3U / XMLTV into the profile folder."""
     include_fast = setting_bool("include_fast")
     days = max(1, min(14, setting_int("guide_days", 3)))
@@ -206,7 +233,9 @@ def _refresh_guide(tablo):
     from .tablo import LOGO_KINDS_SEEN
     log("logo versions offered by Tablo: {}".format(", ".join(sorted(LOGO_KINDS_SEEN)) or "none"))
     style = logo_style()
-    made = logocache.build(channels, tablo.s, profile_dir(), style, log)
+    made = logocache.build(channels, tablo.s, profile_dir(), style, log, abort)
+    if abort():
+        raise Aborted()
     if made:
         log("prepared {} channel logos".format(made))
     logocache.apply(channels, profile_dir(), style, base_url())
@@ -215,6 +244,8 @@ def _refresh_guide(tablo):
     for c in channels:
         lst = []
         for d in range(days):
+            if abort():
+                raise Aborted()
             day = (today + datetime.timedelta(days=d)).isoformat()
             try:
                 lst.extend(tablo.airings(c["id"], day) or [])
@@ -294,7 +325,14 @@ def run():
     monitor = Monitor()
     log("service starting")
     tablo = get_tablo()
-    server = Server(tablo)
+    try:
+        server = Server(tablo, monitor)
+    except OSError as e:
+        if monitor.abortRequested():
+            return
+        log("can't start the local server on port {}: {}. Change 'Local server port' in the "
+            "add-on settings if another program uses it.".format(server_port(), e), xbmc.LOGERROR)
+        raise
     server.start()
     player = Player(tablo)
     next_refresh = 0
@@ -315,9 +353,12 @@ def run():
                 if tablo.email and tablo.password:
                     try:
                         log("refreshing guide...")
-                        n = refresh_guide(tablo)
+                        n = refresh_guide(tablo, abort=monitor.abortRequested)
                         next_refresh = time.time() + 3600 * max(1, setting_int("refresh_hours", 6))
                         result = str(n)
+                    except Aborted:
+                        log("guide refresh stopped: Kodi asked the service to stop")
+                        break
                     except Exception as e:
                         log("guide refresh failed: {}".format(e), xbmc.LOGERROR)
                         next_refresh = time.time() + 600
@@ -332,3 +373,4 @@ def run():
                 break
     finally:
         server.stop()
+        log("service stopped")

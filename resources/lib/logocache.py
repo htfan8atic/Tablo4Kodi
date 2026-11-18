@@ -32,11 +32,13 @@ def path_for(profile, key):
     return os.path.join(cache_dir(profile), key + ".png")
 
 
-def build(channels, session, profile, mode, log=lambda m: None):
+def build(channels, session, profile, mode, log=lambda m: None, abort=lambda: False):
     """Download and normalize any logos not cached yet, trying each logo version in turn.
     Returns how many were made. ORIGINAL keeps the image untouched (only the fallback applies)."""
     made = 0
     for c in channels:
+        if abort():
+            break
         urls = _candidates(c)
         if not urls:
             continue
