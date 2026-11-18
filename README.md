@@ -8,39 +8,32 @@ Live TV, a grid TV guide, recordings and recording scheduling for **Tablo 4th Ge
 - **Live TV + guide** appear in Kodi's own **TV** section, through *PVR IPTV Simple Client*.
 - **Video add-on** (Add-ons → Video add-ons → Tablo (4th Gen)) for recordings, scheduling and status.
 
-Needs Kodi 19 or newer (tested on Kodi 22 for Windows and LibreELEC; should also work on CoreELEC,
-see below), a Tablo 4th Gen already set up in the
-official Tablo app, and the Kodi device on the same home network as the Tablo.
+Needs Kodi 19 or newer (tested on Kodi 22 for Windows and LibreELEC; should also work on CoreELEC, see below), a Tablo 4th Gen already set up in the official Tablo app, and the Kodi device on the same home network as the Tablo.
 Older (2nd/3rd Gen) Tablos are not supported.
 
 ## Before you start
 
-1. Find your Tablo's IP address in your router's or mesh app's list of connected devices. Or, more easily in settings in the Tablo app for iOS or Google Play mobile device
-2. Turn on **address reservation** (DHCP reservation / fixed IP) for it in that same app (recommended as your Tablo's IP address could change after a firmware update, power failure, etc.).
-3. From a computer on the same network, opening Command Prompt (press Windows key + R, type cmd, press Enter) and running `ping <Tablo IP>` should get replies.
+1. Find your Tablo's IP address in your router's or mesh app's list of connected devices. Or, more easily, in the settings of the Tablo app for iOS or Android.
+2. Turn on **address reservation** (DHCP reservation / fixed IP) for it in that same app (recommended, as your Tablo's IP address could change after a firmware update, power failure, etc.).
+3. From a computer on the same network, open Command Prompt (press Windows key + R, type `cmd`, press Enter) and run `ping <Tablo IP>`. You should get replies.
 
-Current 4th Gen firmware takes the add-on's requests on **port 8887**. You don't need to type it: the
-add-on adds the right port when you enter just the IP.
+Current 4th Gen firmware takes the add-on's requests on **port 8887**. You don't need to type it: the add-on adds the right port when you enter just the IP.
 
 ## 1. Install
 
 1. Settings → System → Add-ons → turn on **Unknown sources**.
-2. Download `plugin.video.tablo4g-<version>.zip` from the
-   [latest release](https://github.com/htfan8atic/Tablo4Kodi/releases), then in Kodi go to
-   Settings → Add-ons → **Install from zip file** and pick it.
+2. Download `plugin.video.tablo4g-<version>.zip` from the [latest release](https://github.com/htfan8atic/Tablo4Kodi/releases), then in Kodi go to Settings → Add-ons → **Install from zip file** and select it.
 3. Install **PVR IPTV Simple Client** from the Kodi Add-on repository (PVR clients) if you don't have it.
 4. Optional, for pause/rewind on live TV: install **Inputstream FFmpeg Direct** and **InputStream Adaptive**.
 
-To update, install a newer zip the same way (your settings are kept), then restart Kodi.
+To update, install a newer ZIP file the same way (your settings are kept), then restart Kodi.
 
 ## 2. Sign in
 
 1. Open the video add-on's **Settings**.
 2. Enter your Tablo account **email** and **password**.
-3. **Tablo IP address override:** your Tablo's IP, for example `192.168.68.34`. Recommended:
-   Tablo's cloud sometimes reports an old address. (`192.168.68.34:8887` works too.)
-4. Restart Kodi, open the add-on, run **Test connection**. The sign-in, channel list, *Tablo on LAN*
-   and *Local service* lines should say OK.
+3. **Tablo IP address override:** your Tablo's IP, for example `192.168.68.34`. Recommended: Tablo's cloud sometimes reports an old address. (`192.168.68.34:8887` works too.)
+4. Restart Kodi, open the add-on, run **Test connection**. The sign-in, channel list, *Tablo on LAN* and *Local service* lines should say OK.
 
 | Test connection line | If it fails |
 |---|---|
@@ -58,8 +51,7 @@ To update, install a newer zip the same way (your settings are kept), then resta
 5. Optional, **Timeshift**: enable it for pause/rewind (needs Inputstream FFmpeg Direct).
 6. OK, then restart Kodi. The guide fills in within a minute.
 
-The add-on's **Set up IPTV Simple Client** menu item tries to do steps 3–4 for you, but on Kodi 20+
-you usually have to enter them by hand.
+The add-on's **Set up IPTV Simple Client** menu item tries to do steps 3–4 for you, but on Kodi 20+ you usually have to enter them by hand.
 
 ## Using it
 
@@ -74,24 +66,11 @@ you usually have to enter them by hand.
 | Series being recorded | Video add-on → Series recording rules |
 | Tuners and storage | Video add-on → Tablo status |
 
-**Recording from the TV guide:** in Home → TV → Guide, open the context menu on a programme
-(right-click, press **C**, or long-press OK) and choose **Record with Tablo**. You can record that
-airing, all episodes, or new episodes only, or cancel a recording. Kodi's own *Record* doesn't work
-for Tablo channels (IPTV Simple can't record); Kodi normally hides it for them. To get the menu with
-a single click, set Kodi's Settings → PVR & Live TV → Guide → **Default select action** to
-*Show context menu* (clicking a show that's on now then also opens the menu instead of tuning).
-Don't set it to *Record*.
+**Recording from the TV guide:** in Home → TV → Guide, open the context menu on a program (right-click, press **C**, or long-press OK) and choose **Record with Tablo**. You can record that airing, all episodes, or new episodes only, or cancel a recording. Kodi's own *Record* doesn't work for Tablo channels (IPTV Simple can't record); Kodi normally hides it for them. To get the menu with a single click, set Kodi's Settings → PVR & Live TV → Guide → **Default select action** to *Show context menu* (clicking a show that's on now then also opens the menu instead of tuning). Don't set it to *Record*.
 
-**Guide updates:** the add-on refreshes the guide by itself when Kodi starts and every 6 hours, so
-there's normally nothing to do. **Refresh TV guide now** in the add-on forces one. The add-on's
-Settings → *Live TV & guide* also sets how many days of guide to load (up to 14), how often to
-refresh, and whether to include Tablo's free streaming (FAST) channels.
+**Guide updates:** the add-on refreshes the guide by itself when Kodi starts and every 6 hours, so there's normally nothing to do. **Refresh TV guide now** in the add-on forces one. The add-on's Settings → *Live TV & guide* also sets how many days of guide to load (up to 14), how often to refresh, and whether to include Tablo's free streaming (FAST) channels.
 
-**Channel logos:** by default the add-on shows each channel's logo as Tablo supplies it (the full-colour
-versions the Tablo apps use, falling back to another version when one is missing). Under the add-on's
-Settings → *Live TV & guide* → **Channel logos** you can instead choose *Same size* (trimmed and resized
-so they line up) or *Same size, white* (white logos vanish on light skins). When the logos change, the
-add-on reloads IPTV Simple so Kodi shows them straight away.
+**Channel logos:** by default the add-on shows each channel's logo as Tablo supplies it (the full-color versions the Tablo apps use, falling back to another version when one is missing). Under the add-on's Settings → *Live TV & guide* → **Channel logos** you can instead choose *Same size* (trimmed and resized so they line up) or *Same size, white* (white logos vanish on light skins). When the logos change, the add-on reloads IPTV Simple so Kodi shows them right away.
 
 ## Troubleshooting
 
@@ -104,46 +83,34 @@ add-on reloads IPTV Simple so Kodi shows them straight away.
 | No channels in TV | Set the M3U URL (step 3), restart Kodi |
 | Stopped working after a Tablo update | Tablo may have changed its API; report it with a log |
 
-Kodi log: Windows `%APPDATA%\Kodi\kodi.log` · Android/Fire TV
-`Android/data/org.xbmc.kodi/files/.kodi/temp/kodi.log` · Linux `~/.kodi/temp/kodi.log` · Mac
-`~/Library/Logs/kodi.log`. Lines starting `[plugin.video.tablo4g]` are the useful ones. Your
-email is masked in the log; your Tablo's local IP is not.
+Kodi log: Windows `%APPDATA%\Kodi\kodi.log` · Android/Fire TV `Android/data/org.xbmc.kodi/files/.kodi/temp/kodi.log` · Linux `~/.kodi/temp/kodi.log` · Mac `~/Library/Logs/kodi.log`. Lines starting `[plugin.video.tablo4g]` are the useful ones. Your email is masked in the log; your Tablo's local IP is not.
 
 ## LibreELEC and CoreELEC
 
-The add-on is plain Python, so the same zip and steps work on LibreELEC and CoreELEC (tested on
-LibreELEC with Kodi 22). The Tablo sends antenna channels as MPEG-2 video with Dolby Digital audio. Its dependencies come from the official Kodi repository. Differences:
+The add-on is plain Python, so the same ZIP file and steps work on LibreELEC and CoreELEC (tested on LibreELEC with Kodi 22). The Tablo sends antenna channels as MPEG-2 video with Dolby Digital audio. Its dependencies come from the official Kodi repository. Differences:
 
-- **Log file:** `/storage/.kodi/temp/kodi.log`. From another computer, use the network share
-  `\\<box IP>\Logfiles`. On LibreELEC, **LibreELEC Settings → System → Logs** can upload it and give you a link.
-- **Raspberry Pi 4:** no hardware MPEG-2 decoding, and antenna channels are often MPEG-2, so 1080i
-  channels may stutter. A Pi 5, an x86 box or a CoreELEC (Amlogic) box handles them fine.
-- **Time zone:** set it under Settings → Interface → Regional; the guide is built from the box's date.
+- **Log file:** `/storage/.kodi/temp/kodi.log`. From another computer, use the network share `\\<box IP>\Logfiles`. On LibreELEC, **LibreELEC Settings → System → Logs** can upload it and give you a link.
+- **Raspberry Pi 4:** no hardware MPEG-2 decoding, and antenna channels are often MPEG-2, so 1080i channels may stutter. A Pi 5, an x86 box or a CoreELEC (Amlogic) box handles them fine.
+- **Time zone:** set it under Settings → Interface → Regional; the guide is built from the device's date.
 - **Same network:** the box must be on the Tablo's network. Use the same Tablo IP override.
 
 ## Using it alongside HDHomeRun or another TV source
 
-Kodi can run several TV sources at once, so IPTV Simple (Tablo) and an HDHomeRun or other PVR client
-can both stay enabled; they don't share tuners. On the same antenna, each local channel appears twice.
+Kodi can run several TV sources at once, so IPTV Simple (Tablo) and an HDHomeRun or other PVR client can both stay enabled; they don't share tuners. On the same antenna, each local channel appears twice.
 
-- **Channel groups:** TV → Channels → side menu → pick a group. Tablo channels are in the **Antenna** group.
-- **Hide duplicates:** TV → Channels → context menu → **Channel manager** → untick **Visible**.
+- **Channel groups:** TV → Channels → side menu → select a group. Tablo channels are in the **Antenna** group.
+- **Hide duplicates:** TV → Channels → context menu → **Channel manager** → uncheck **Visible**.
 - **Order and numbering:** Settings → PVR & Live TV (option names vary between Kodi versions).
 - **One at a time:** disable either client under Add-ons → My add-ons → PVR clients.
 
 ## Known limits
 
 - Kodi's own *Record* in the TV guide doesn't work for Tablo channels (IPTV Simple can't record). Use **Record with Tablo** from the guide's context menu, or **Record a show** in the add-on.
-- **Record with Tablo** matches the programme by show, channel, date and time; some sports events can't be matched. Use **Record a show** for those.
+- **Record with Tablo** matches the program by show, channel, date and time; some sports events can't be matched. Use **Record a show** for those.
 - Recording thumbnails may not load.
 - Your password is stored in plain text in Kodi's add-on settings, as with most Kodi add-ons. It's only sent to Tablo's sign-in service.
 - Unofficial; not affiliated with Nuvyyo/Tablo. A Tablo firmware update may break it.
 
 ## How it works / credits
 
-Sign-in, channel list and guide come from Tablo's cloud (`lighthousetv.ewscloud.com`). Live
-streams, recordings and scheduling go directly to the Tablo on your network, using the same signed
-requests as the official apps. Based on the MIT-licensed
-[tablo-api](https://github.com/trevor-viljoen/tablo-api) and
-[tablo2plex](https://github.com/hearhellacopters/tablo2plex), and the
-[unofficial legacy API docs](https://jessedp.github.io/tablo-api-docs/). MIT licensed, see LICENSE.txt.
+Sign-in, channel list and guide come from Tablo's cloud (`lighthousetv.ewscloud.com`). Live streams, recordings and scheduling go directly to the Tablo on your network, using the same signed requests as the official apps. Based on the MIT-licensed [tablo-api](https://github.com/trevor-viljoen/tablo-api) and [tablo2plex](https://github.com/hearhellacopters/tablo2plex), and the [unofficial legacy API docs](https://jessedp.github.io/tablo-api-docs/). MIT licensed, see LICENSE.txt.
