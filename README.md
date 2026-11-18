@@ -1,5 +1,8 @@
 # Tablo (4th Gen) for Kodi — unofficial
 
+**[⬇ Download the latest release](https://github.com/htfan8atic/Tablo4Kodi/releases/latest)** (beta) ·
+[Setup steps](#before-you-start) · [Report a problem](https://github.com/htfan8atic/Tablo4Kodi/issues)
+
 Live TV, a grid TV guide, recordings and recording scheduling for **Tablo 4th Gen** DVRs in Kodi.
 
 - **Live TV + guide** appear in Kodi's own **TV** section, through *PVR IPTV Simple Client*.
