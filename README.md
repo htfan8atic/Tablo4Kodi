@@ -1,4 +1,4 @@
-# Tablo (4th Gen) for Kodi — unofficial
+# Tablo 4th Gen Video & PVR for Kodi (Unofficial)
 
 **[⬇ Download the latest release](https://github.com/htfan8atic/Tablo4Kodi/releases/latest)** (beta) ·
 [Setup steps](#before-you-start) · [Report a problem](https://github.com/htfan8atic/Tablo4Kodi/issues)
