@@ -16,12 +16,15 @@ Older (2nd/3rd Gen) Tablos are not supported.
 2. Turn on **address reservation** (DHCP reservation / fixed IP) for it in that same app (recommended as your Tablo's IP address could change after a firmware update, power failure, etc.).
 3. From a computer on the same network, opening Command Prompt (press Windows key + R, type cmd, press Enter) and running `ping <Tablo IP>` should get replies.
 
-Current 4th Gen firmware takes the add-on's requests on **port 8887**.
+Current 4th Gen firmware takes the add-on's requests on **port 8887**. You don't need to type it: the
+add-on adds the right port when you enter just the IP.
 
 ## 1. Install
 
 1. Settings → System → Add-ons → turn on **Unknown sources**.
-2. Settings → Add-ons → **Install from zip file** → this zip.
+2. Download `plugin.video.tablo4g-<version>.zip` from the
+   [latest release](https://github.com/htfan8atic/Tablo4Kodi/releases), then in Kodi go to
+   Settings → Add-ons → **Install from zip file** and pick it.
 3. Install **PVR IPTV Simple Client** from the Kodi Add-on repository (PVR clients) if you don't have it.
 4. Optional, for pause/rewind on live TV: install **Inputstream FFmpeg Direct** and **InputStream Adaptive**.
 
@@ -31,15 +34,17 @@ To update, install a newer zip the same way (your settings are kept), then resta
 
 1. Open the video add-on's **Settings**.
 2. Enter your Tablo account **email** and **password**.
-3. **Tablo IP address override:** `<your Tablo IP>:8887` (for example `192.168.68.34:8887`).
-4. Restart Kodi, open the add-on, run **Test connection**. Every line should say OK.
+3. **Tablo IP address override:** your Tablo's IP, for example `192.168.68.34`. Recommended:
+   Tablo's cloud sometimes reports an old address. (`192.168.68.34:8887` works too.)
+4. Restart Kodi, open the add-on, run **Test connection**. The sign-in, channel list, *Tablo on LAN*
+   and *Local service* lines should say OK.
 
 | Test connection line | If it fails |
 |---|---|
 | Cloud sign-in | Wrong email/password, or no internet |
 | Tablo answers at … | Wrong IP, or Kodi isn't on the Tablo's network |
-| Tablo on LAN | Wrong port. Use `:8887` |
-| Local service | Restart Kodi. HTTP 503 means use **Refresh TV guide now** |
+| Tablo on LAN | Wrong port: enter just the IP, or `IP:8887` |
+| Local service | Restart Kodi. HTTP 503 means the guide isn't built yet; wait a minute |
 
 ## 3. Connect IPTV Simple (channels + guide)
 
@@ -61,14 +66,23 @@ you usually have to enter them by hand.
 | Grid guide | Home → TV → Guide |
 | Recordings (play, protect, delete) | Video add-on → Recordings (use the context menu for actions) |
 | Record a show | Video add-on → Record a show |
+| Record from the guide | TV → Guide → context menu → **Record with Tablo** (see below) |
 | What's scheduled / conflicts | Video add-on → Upcoming recordings |
+| Series being recorded | Video add-on → Series recording rules |
 | Tuners and storage | Video add-on → Tablo status |
 
 **Recording from the TV guide:** in Home → TV → Guide, open the context menu on a programme
 (right-click, press **C**, or long-press OK) and choose **Record with Tablo**. You can record that
-airing, all episodes, or new episodes only, or cancel a recording. Kodi's own *Record* button doesn't
-work with IPTV Simple, so use this one. To get the menu with a single click, set Kodi's
-Settings → PVR & Live TV → Guide → **Default select action** to *Show context menu*.
+airing, all episodes, or new episodes only, or cancel a recording. Kodi's own *Record* doesn't work
+for Tablo channels (IPTV Simple can't record); Kodi normally hides it for them. To get the menu with
+a single click, set Kodi's Settings → PVR & Live TV → Guide → **Default select action** to
+*Show context menu* (clicking a show that's on now then also opens the menu instead of tuning).
+Don't set it to *Record*.
+
+**Guide updates:** the add-on refreshes the guide by itself when Kodi starts and every 6 hours, so
+there's normally nothing to do. **Refresh TV guide now** in the add-on forces one. The add-on's
+Settings → *Live TV & guide* also sets how many days of guide to load (up to 14), how often to
+refresh, and whether to include Tablo's free streaming (FAST) channels.
 
 **Channel logos:** by default the add-on shows each channel's logo as Tablo supplies it (the full-colour
 versions the Tablo apps use, falling back to another version when one is missing). Under the add-on's
@@ -80,8 +94,9 @@ add-on reloads IPTV Simple so Kodi shows them straight away.
 
 | Symptom | Fix |
 |---|---|
-| "Playback failed" / "Can't reach the Tablo" | Check the IP override (`<IP>:8887`), run Test connection |
-| Tablo on LAN: Authentication failure | Use port `:8887` |
+| "Playback failed" / "Can't reach the Tablo" | Check the IP override (the Tablo's current IP), run Test connection |
+| Tablo on LAN: Authentication failure | Enter just the IP, or `IP:8887` |
+| A channel has no logo | Tablo's server has no logo for that station (e.g. Telemundo); nothing to fix |
 | Channels but empty guide | Set the XMLTV URL in the **[Enabled]** IPTV Simple configuration |
 | No channels in TV | Set the M3U URL (step 3), restart Kodi |
 | Stopped working after a Tablo update | Tablo may have changed its API; report it with a log |
@@ -101,7 +116,7 @@ LibreELEC with Kodi 22). The Tablo sends antenna channels as MPEG-2 video with D
 - **Raspberry Pi 4:** no hardware MPEG-2 decoding, and antenna channels are often MPEG-2, so 1080i
   channels may stutter. A Pi 5, an x86 box or a CoreELEC (Amlogic) box handles them fine.
 - **Time zone:** set it under Settings → Interface → Regional; the guide is built from the box's date.
-- **Same network:** the box must be on the Tablo's network. Use the same `<Tablo IP>:8887` override.
+- **Same network:** the box must be on the Tablo's network. Use the same Tablo IP override.
 
 ## Using it alongside HDHomeRun or another TV source
 
@@ -115,7 +130,8 @@ can both stay enabled; they don't share tuners. On the same antenna, each local 
 
 ## Known limits
 
-- Kodi's own *Record* button in the TV guide doesn't work (IPTV Simple can't record). Use **Record with Tablo** from the guide's context menu, or **Record a show** in the add-on.
+- Kodi's own *Record* in the TV guide doesn't work for Tablo channels (IPTV Simple can't record). Use **Record with Tablo** from the guide's context menu, or **Record a show** in the add-on.
+- **Record with Tablo** matches the programme by show, channel, date and time; some sports events can't be matched. Use **Record a show** for those.
 - Recording thumbnails may not load.
 - Your password is stored in plain text in Kodi's add-on settings, as with most Kodi add-ons. It's only sent to Tablo's sign-in service.
 - Unofficial; not affiliated with Nuvyyo/Tablo. A Tablo firmware update may break it.
