@@ -67,5 +67,7 @@ def base_url():
 
 
 def logo_style():
-    """0 = original, 1 = same size, 2 = same size and white, 3 = colour on a tile (default)."""
-    return setting_int("logo_style", 3)
+    """0 = original (default), 1 = same size, 2 = same size and white.
+    The old 'colour on a tile' style (3) was removed; anyone who had it gets Original."""
+    style = setting_int("logo_style", 0)
+    return style if style in (0, 1, 2) else 0

@@ -64,13 +64,17 @@ you usually have to enter them by hand.
 | What's scheduled / conflicts | Video add-on → Upcoming recordings |
 | Tuners and storage | Video add-on → Tablo status |
 
-**Channel logos:** by default each channel's full-colour logo (the same ones the Tablo apps use) is
-placed on a small rounded tile, all the same size and shape. The tile is light, or dark for logos
-that are mostly white, so every logo stays readable on any skin and colour scheme, including light
-skins such as Arctic: Zephyr's light themes. Other styles are under the add-on's Settings →
-*Live TV & guide* → **Channel logos**: *Original*, *Same size* (colour, no tile) and *Same size, white*
-(white logos vanish on light skins). When the logos change, the add-on reloads IPTV Simple so Kodi
-shows them straight away.
+**Recording from the TV guide:** in Home → TV → Guide, open the context menu on a programme
+(right-click, press **C**, or long-press OK) and choose **Record with Tablo**. You can record that
+airing, all episodes, or new episodes only, or cancel a recording. Kodi's own *Record* button doesn't
+work with IPTV Simple, so use this one. To get the menu with a single click, set Kodi's
+Settings → PVR & Live TV → Guide → **Default select action** to *Show context menu*.
+
+**Channel logos:** by default the add-on shows each channel's logo as Tablo supplies it (the full-colour
+versions the Tablo apps use, falling back to another version when one is missing). Under the add-on's
+Settings → *Live TV & guide* → **Channel logos** you can instead choose *Same size* (trimmed and resized
+so they line up) or *Same size, white* (white logos vanish on light skins). When the logos change, the
+add-on reloads IPTV Simple so Kodi shows them straight away.
 
 ## Troubleshooting
 
@@ -111,7 +115,7 @@ can both stay enabled; they don't share tuners. On the same antenna, each local 
 
 ## Known limits
 
-- You can't record from Kodi's TV guide (IPTV Simple doesn't support it). Use **Record a show** in the add-on.
+- Kodi's own *Record* button in the TV guide doesn't work (IPTV Simple can't record). Use **Record with Tablo** from the guide's context menu, or **Record a show** in the add-on.
 - Recording thumbnails may not load.
 - Your password is stored in plain text in Kodi's add-on settings, as with most Kodi add-ons. It's only sent to Tablo's sign-in service.
 - Unofficial; not affiliated with Nuvyyo/Tablo. A Tablo firmware update may break it.

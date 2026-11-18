@@ -7,7 +7,7 @@ import uuid
 
 from . import logos
 
-ORIGINAL, SAME_SIZE, WHITE, TILE = 0, 1, 2, 3
+ORIGINAL, SAME_SIZE, WHITE = 0, 1, 2
 
 
 def _key(urls, mode):
@@ -53,7 +53,7 @@ def build(channels, session, profile, mode, log=lambda m: None):
             data = r.content
             if mode != ORIGINAL:
                 try:
-                    data = logos.normalize(r.content, white=(mode == WHITE), plate=(mode == TILE))
+                    data = logos.normalize(r.content, white=(mode == WHITE))
                 except logos.Unsupported as e:
                     log("logo {} kept as-is ({})".format(c.get("call_sign"), e))
             tmp = "{}.{}.tmp".format(p, uuid.uuid4().hex[:8])
