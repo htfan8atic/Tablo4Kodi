@@ -51,17 +51,63 @@ def _wanted_date_numbers():
     return set(int(n) for n in re.findall(r"\d+", _info("StartDate")))
 
 
+def _tablo_channel():
+    """The Tablo's 'major.minor' channel number for the highlighted programme.
+    Kodi may renumber channels (2, 3, 10 ...), so take it from the channel name the add-on
+    gave it ('11.1 WXIADT1'); fall back to Kodi's number only if that looks like major.minor."""
+    for label in ("ChannelName", "ChannelNumberLabel", "ChannelNumber"):
+        m = re.match(r"\s*(\d+)[.\-](\d+)\b", _info(label))
+        if m:
+            return "{}.{}".format(int(m.group(1)), int(m.group(2)))
+    return None
+
+
+def _airing_channel(r):
+    ch = ((r.get("airing_details") or {}).get("channel") or {}).get("channel") or {}
+    if ch.get("major") is None:
+        return None
+    return "{}.{}".format(ch.get("major"), ch.get("minor"))
+
+
+_SKEW = None
+
+
+def _kodi_skew():
+    """Minutes between the clock Kodi shows and Python's local clock. On some systems (e.g.
+    LibreELEC) Kodi's time zone setting and the OS time zone can differ; the guide uses Kodi's."""
+    global _SKEW
+    if _SKEW is None:
+        _SKEW = 0
+        m = re.search(r"(\d{1,2}):(\d{2})", xbmc.getInfoLabel("System.Time(hh:mm xx)") or "")
+        if m:
+            h, mi = int(m.group(1)), int(m.group(2))
+            low = xbmc.getInfoLabel("System.Time(hh:mm xx)").lower()
+            if "pm" in low and h < 12:
+                h += 12
+            elif "am" in low and h == 12:
+                h = 0
+            now = datetime.datetime.now()
+            diff = (h * 60 + mi) - (now.hour * 60 + now.minute)
+            diff = (diff + 720) % 1440 - 720          # -720..719
+            _SKEW = int(round(diff / 15.0)) * 15     # time zones move in 15-minute steps
+            if _SKEW:
+                log("Kodi's clock differs from the system clock by {} minutes; adjusting".format(_SKEW))
+    return _SKEW
+
+
 def _airing_matches(r, chno, hm, date_nums):
     ad = r.get("airing_details") or {}
-    ch = (ad.get("channel") or {}).get("channel") or {}
-    if chno and "{}.{}".format(ch.get("major"), ch.get("minor")) != chno:
+    if chno and _airing_channel(r) not in (None, chno):
         return False
     dt = guide.parse_time(ad.get("datetime"))
     if not dt:
         return False
-    local = dt.astimezone()
-    if hm and (local.hour, local.minute) != hm:
-        return False
+    local = dt.astimezone() + datetime.timedelta(minutes=_kodi_skew())
+    if hm:
+        # allow a couple of minutes' difference between the guide and the Tablo's schedule
+        diff = abs((local.hour * 60 + local.minute) - (hm[0] * 60 + hm[1]))
+        if min(diff, 1440 - diff) > 2:
+            return False
     if date_nums and not {local.day, local.month} <= date_nums:
         return False
     return True
@@ -92,13 +138,29 @@ def _find(tablo, title, chno, hm, date_nums):
     """Return (kind, parent record, airing record) or (None, None, None)."""
     from .plugin import _all_series  # shared cache with 'Record a show'
     want = _norm(title)
+    seen = []
+    title_match = None
     for s in _all_series(tablo):
         if _norm((s.get("series") or {}).get("title")) != want:
             continue
+        title_match = title_match or s
         eps = tablo.local("GET", s["path"].rstrip("/") + "/episodes") or []
-        for r in tablo.batch(eps).values():
-            if r and _airing_matches(r, chno, hm, date_nums):
+        airings = [r for r in tablo.batch(eps).values() if r]
+        for r in airings:
+            if _airing_matches(r, chno, hm, date_nums):
                 return "series", s, r
+        # channel numbering can differ (e.g. a renumbered or virtual channel): if exactly one
+        # airing of this show matches the date and time, that's the one
+        same_time = [r for r in airings if _airing_matches(r, None, hm, date_nums)]
+        if len(same_time) == 1:
+            return "series", s, same_time[0]
+        seen += ["{} ch {}".format((r.get("airing_details") or {}).get("datetime"), _airing_channel(r))
+                 for r in airings]
+    if seen or title_match:
+        log("record from guide: show found but no airing matched; Tablo has: {}".format(
+            ", ".join(sorted(seen)[:20]) or "no upcoming airings"))
+    else:
+        log("record from guide: no show titled {!r} in the Tablo's guide".format(title))
     try:
         movies = _cached(tablo, MOVIE_CACHE, "/guide/movies", "guide movies")
     except TabloError as e:  # not every Tablo exposes a movie list; series still worked above
@@ -111,6 +173,8 @@ def _find(tablo, title, chno, hm, date_nums):
         for r in tablo.batch(airings).values():
             if r and _airing_matches(r, chno, hm, date_nums):
                 return "movie", m, r
+    if title_match:
+        return "series", title_match, None
     return None, None, None
 
 
@@ -118,28 +182,35 @@ def run():
     title = _info("Title")
     if not title:
         return notify("Highlight a programme in the TV guide first", error=True)
-    chno = _info("ChannelNumberLabel").strip()
+    chno = _tablo_channel()
     hm = _wanted_time()
     date_nums = _wanted_date_numbers()
-    log("record from guide: {!r} ch {} at {} {}".format(title, chno, _info("StartDate"), _info("StartTime")))
+    log("record from guide: {!r} ch {} (Kodi: {!r} / {!r}) at {!r} {!r}".format(
+        title, chno, _info("ChannelName"), _info("ChannelNumberLabel"),
+        _info("StartDate"), _info("StartTime")))
     tablo = get_tablo()
     try:
         kind, parent, airing = _find(tablo, title, chno, hm, date_nums)
-        if not airing:
+        if not airing and kind == "series":
+            pass  # offer the series options below
+        elif not airing:
             return xbmcgui.Dialog().ok(
                 "Record with Tablo",
                 "Couldn't find \"{}\" at that time on the Tablo.\n"
                 "Use Record a show in the Tablo add-on instead.".format(title))
-        scheduled = (airing.get("schedule") or {}).get("state") in ("scheduled", "conflicted")
-        ep = airing.get("episode") or {}
-        heading = title + (" - " + ep["title"] if ep.get("title") else "")
         options, actions = [], []
-        if scheduled:
-            options.append("Don't record this airing")
-            actions.append(("airing", False))
+        if airing:
+            scheduled = (airing.get("schedule") or {}).get("state") in ("scheduled", "conflicted")
+            ep = airing.get("episode") or {}
+            heading = title + (" - " + ep["title"] if ep.get("title") else "")
+            if scheduled:
+                options.append("Don't record this airing")
+                actions.append(("airing", False))
+            else:
+                options.append("Record this airing")
+                actions.append(("airing", True))
         else:
-            options.append("Record this airing")
-            actions.append(("airing", True))
+            heading = "{} (this airing isn't on the Tablo's schedule)".format(title)
         if kind == "series":
             rule = parent.get("schedule_rule") or "none"
             if rule != "all":
