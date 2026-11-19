@@ -198,30 +198,32 @@ def run():
                 "Record with Tablo",
                 "Couldn't find \"{}\" at that time on the Tablo.\n"
                 "Use Record a show in the Tablo add-on instead.".format(title))
+        # Order: this episode, new episodes, all episodes, then the cancel options.
         options, actions = [], []
+        scheduled = False
         if airing:
             scheduled = (airing.get("schedule") or {}).get("state") in ("scheduled", "conflicted")
             ep = airing.get("episode") or {}
             heading = title + (" - " + ep["title"] if ep.get("title") else "")
-            if scheduled:
-                options.append("Don't record this airing")
-                actions.append(("airing", False))
-            else:
-                options.append("Record this airing")
+            if not scheduled:
+                options.append("Record this episode only" if kind == "series" else "Record this airing")
                 actions.append(("airing", True))
         else:
             heading = "{} (this airing isn't on the Tablo's schedule)".format(title)
+        rule = (parent.get("schedule_rule") or "none") if kind == "series" else None
         if kind == "series":
-            rule = parent.get("schedule_rule") or "none"
-            if rule != "all":
-                options.append("Record all episodes")
-                actions.append(("rule", "all"))
             if rule != "new":
                 options.append("Record new episodes only")
                 actions.append(("rule", "new"))
-            if rule != "none":
-                options.append("Stop recording this series")
-                actions.append(("rule", "none"))
+            if rule != "all":
+                options.append("Record all episodes")
+                actions.append(("rule", "all"))
+        if scheduled:
+            options.append("Don't record this episode" if kind == "series" else "Don't record this airing")
+            actions.append(("airing", False))
+        if kind == "series" and rule != "none":
+            options.append("Stop recording this series")
+            actions.append(("rule", "none"))
         choice = xbmcgui.Dialog().select(heading, options)
         if choice < 0:
             return
