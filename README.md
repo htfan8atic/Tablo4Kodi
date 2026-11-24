@@ -80,6 +80,7 @@ The add-on's **Set up IPTV Simple Client** menu item tries to do steps 3–4 for
 
 | Symptom | Fix |
 |---|---|
+| A channel the Tablo app shows is missing in Kodi | The add-on adds channels from the Tablo's own scan when Tablo's online lineup lacks them. Run **Refresh TV guide now**; if it's still missing, rescan channels in the Tablo app, then refresh again. A channel added this way may have no guide listings or logo until Tablo's online lineup catches up. |
 | "Playback failed" / "Can't reach the Tablo" | Check the IP override (the Tablo's current IP), run Test connection |
 | Tablo on LAN: Authentication failure | Enter just the IP, or `IP:8887` |
 | A channel has no logo | Tablo's server has no logo for that station (e.g. Telemundo); nothing to fix |

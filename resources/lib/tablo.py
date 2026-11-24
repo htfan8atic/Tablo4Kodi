@@ -310,8 +310,50 @@ class Tablo(object):
                 "logo": logos[0] if logos else "",
                 "logos": logos,
             })
+        # The cloud lineup can lag behind the Tablo's own channel scan (channels found by a
+        # later scan are missing), so add any antenna channels only the device knows about.
+        have_ids = set(c["id"] for c in out)
+        have_nums = set((c["major"], c["minor"]) for c in out if c["major"])
+        added = []
+        for c in self.device_channels():
+            if c["id"] in have_ids or (c["major"], c["minor"]) in have_nums:
+                continue
+            out.append(c)
+            added.append(c["number"] or c["call_sign"])
+        if added:
+            self.logger("channels from the Tablo that its cloud lineup is missing: {}".format(
+                ", ".join(added)))
         out.sort(key=lambda c: (0, c["major"], c["minor"], "") if c["major"]
                  else (1, 0, 0, c["call_sign"].lower()))
+        return out
+
+    def device_channels(self):
+        """Antenna channels from the Tablo's own scan (local API); [] if it can't be read."""
+        try:
+            paths = self.local("GET", "/guide/channels") or []
+            recs = self.batch([p for p in paths if isinstance(p, str)])
+        except TabloError as e:
+            self.logger("couldn't read the Tablo's own channel list: {}".format(e))
+            return []
+        out = []
+        for path, r in recs.items():
+            if not isinstance(r, dict):
+                continue
+            info = r.get("channel") if isinstance(r.get("channel"), dict) else r
+            try:
+                major, minor = int(info.get("major") or 0), int(info.get("minor") or 0)
+            except (TypeError, ValueError):
+                continue
+            if not major:
+                continue
+            cid = str(r.get("identifier") or r.get("object_id") or path.rstrip("/").rsplit("/", 1)[-1])
+            call = info.get("call_sign") or info.get("callSign") or "{}.{}".format(major, minor)
+            out.append({
+                "id": cid, "kind": "ota", "major": major, "minor": minor,
+                "number": "{}.{}".format(major, minor), "call_sign": call,
+                "network": info.get("network") or "", "name": call,
+                "logo": "", "logos": [], "path": path,
+            })
         return out
 
     def airings(self, channel_id, day):
