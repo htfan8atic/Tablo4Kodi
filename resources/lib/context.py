@@ -46,9 +46,37 @@ def _wanted_time():
     return h, mi
 
 
-def _wanted_date_numbers():
-    """Numbers in Kodi's regional date string (e.g. '11/17/2026' -> {11, 17, 2026})."""
-    return set(int(n) for n in re.findall(r"\d+", _info("StartDate")))
+_MONTHS = ("jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec")
+
+
+def _wanted_date():
+    """Possible (month, day) pairs for the highlighted programme, from Kodi's date string.
+
+    Kodi gives guide dates in its *long* regional format ('Tuesday, November 24, 2026'), but
+    short ('11/24/2026', '24/11/2026') and ISO forms are handled too. month is None when the
+    month is a word we don't recognise (another language); the day alone is then enough,
+    because the Tablo's guide only covers about two weeks."""
+    raw = _info("StartDate")
+    month = None
+    for word in re.findall(r"[^\W\d_]+", raw.lower()):
+        if word[:3] in _MONTHS and len(word) >= 3:
+            month = _MONTHS.index(word[:3]) + 1
+            break
+    nums = [int(n) for n in re.findall(r"\d+", raw) if len(n) < 4 and 0 < int(n) <= 31]
+    if not nums:
+        return None
+    if month:
+        return set((month, d) for d in nums)
+    if len(nums) >= 2:
+        a, b = nums[0], nums[1]
+        return {(a, b), (b, a)}
+    return {(None, nums[0])}
+
+
+def _date_ok(local, pairs):
+    if not pairs:
+        return True
+    return any(m in (None, local.month) and d == local.day for m, d in pairs)
 
 
 def _tablo_channel():
@@ -108,7 +136,7 @@ def _airing_matches(r, chno, hm, date_nums):
         diff = abs((local.hour * 60 + local.minute) - (hm[0] * 60 + hm[1]))
         if min(diff, 1440 - diff) > 2:
             return False
-    if date_nums and not {local.day, local.month} <= date_nums:
+    if not _date_ok(local, date_nums):
         return False
     return True
 
@@ -184,7 +212,7 @@ def run():
         return notify("Highlight a programme in the TV guide first", error=True)
     chno = _tablo_channel()
     hm = _wanted_time()
-    date_nums = _wanted_date_numbers()
+    date_nums = _wanted_date()
     log("record from guide: {!r} ch {} (Kodi: {!r} / {!r}) at {!r} {!r}".format(
         title, chno, _info("ChannelName"), _info("ChannelNumberLabel"),
         _info("StartDate"), _info("StartTime")))
@@ -205,11 +233,17 @@ def run():
             scheduled = (airing.get("schedule") or {}).get("state") in ("scheduled", "conflicted")
             ep = airing.get("episode") or {}
             heading = title + (" - " + ep["title"] if ep.get("title") else "")
+            when = guide.parse_time((airing.get("airing_details") or {}).get("datetime"))
+            if when:
+                when = when.astimezone() + datetime.timedelta(minutes=_kodi_skew())
+                heading += "  ({} {}, {}:{:02d} {})".format(
+                    when.strftime("%a"), when.strftime("%b"), when.day,
+                    (when.hour % 12) or 12, when.minute, "PM" if when.hour >= 12 else "AM")
             if not scheduled:
                 options.append("Record this episode only" if kind == "series" else "Record this airing")
                 actions.append(("airing", True))
         else:
-            heading = "{} (this airing isn't on the Tablo's schedule)".format(title)
+            heading = "{} (couldn't match this exact airing on the Tablo)".format(title)
         rule = (parent.get("schedule_rule") or "none") if kind == "series" else None
         if kind == "series":
             if rule != "new":
