@@ -10,6 +10,7 @@ docs), which 4th Gen firmware still serves on port 8885 behind the signed
 Authorization header.
 """
 
+import datetime
 import hashlib
 import hmac
 import json
@@ -21,6 +22,8 @@ from email.utils import formatdate
 from urllib.parse import urlparse
 
 import requests
+
+from .guide import parse_time as _parse_iso
 
 CLOUD = "https://lighthousetv.ewscloud.com"
 CLOUD_UA = "Tablo-FAST/2.0.0 (Mobile; iPhone; iOS 16.6)"
@@ -348,12 +351,97 @@ class Tablo(object):
                 continue
             cid = str(r.get("identifier") or r.get("object_id") or path.rstrip("/").rsplit("/", 1)[-1])
             call = info.get("call_sign") or info.get("callSign") or "{}.{}".format(major, minor)
+            station = str(info.get("tms_station_id") or info.get("station_id") or "").strip()
             out.append({
                 "id": cid, "kind": "ota", "major": major, "minor": minor,
                 "number": "{}.{}".format(major, minor), "call_sign": call,
                 "network": info.get("network") or "", "name": call,
-                "logo": "", "logos": [], "path": path,
+                "logo": "", "logos": [], "path": path, "device_only": True,
+                # Tablo's online guide names channels S<station>_<major>_<minor>
+                # (2.1 on station 19586 is S19586_002_01); try that for listings
+                "guide_id": "S{}_{:03d}_{:02d}".format(station, major, minor) if station.isdigit() else "",
             })
+            if len(out) == 1:
+                self.logger("Tablo channel record example: {}".format(json.dumps(r)[:600]))
+        return out
+
+    def device_guide(self, channels, start, end, abort=None):
+        """Listings from the Tablo's own guide for channels Tablo's online guide doesn't cover.
+
+        Returns {channel id: [airing in the online guide's format]}. The device indexes its
+        guide by show, so collect the shows on those channels, then their airings."""
+        want = {}
+        for c in channels:
+            want[c["path"].rstrip("/")] = c["id"]
+        parents = []
+        for kind, child in (("series", "/episodes"), ("movies", "/airings"), ("sports", "/events")):
+            seen = set()
+            for path in want:
+                if abort and abort():
+                    return {}
+                try:
+                    lst = self.local("GET", "/guide/" + kind, params={"channel": path.rsplit("/", 1)[-1]}) or []
+                except TabloError as e:
+                    self.logger("device guide /guide/{} for {} failed: {}".format(kind, path, e))
+                    continue
+                for p in lst:
+                    if isinstance(p, str) and p not in seen:
+                        seen.add(p)
+                        parents.append((kind, p, child))
+        self.logger("device guide: {} shows on {} channels".format(len(parents), len(want)))
+        airing_paths = []
+        for kind, p, child in parents:
+            if abort and abort():
+                return {}
+            try:
+                airing_paths += [(kind, a) for a in (self.local("GET", p.rstrip("/") + child) or [])
+                                 if isinstance(a, str)]
+            except TabloError:
+                pass
+        recs = {}
+        for i in range(0, len(airing_paths), 200):
+            if abort and abort():
+                return {}
+            recs.update(self.batch([a for _, a in airing_paths[i:i + 200]]))
+        parent_recs = self.batch([p for _, p, _ in parents]) if parents else {}
+        out = {}
+        for kind, a in airing_paths:
+            r = recs.get(a)
+            if not isinstance(r, dict):
+                continue
+            ad = r.get("airing_details") or {}
+            ch = (ad.get("channel_path") or (ad.get("channel") or {}).get("path") or "").rstrip("/")
+            if ch not in want:
+                continue
+            when = _parse_iso(ad.get("datetime"))
+            if not when or when > end or when + datetime.timedelta(seconds=int(ad.get("duration") or 0)) < start:
+                continue
+            parent = parent_recs.get(r.get("series_path") or r.get("movie_path") or r.get("sport_path") or "") or {}
+            pinfo = parent.get("series") or parent.get("movie") or parent.get("sport") or {}
+            ep = r.get("episode") or r.get("event") or {}
+            item = {
+                "identifier": a, "datetime": ad.get("datetime"), "duration": ad.get("duration") or 0,
+                "show": {"title": ad.get("show_title") or pinfo.get("title") or ""},
+                "title": ep.get("title") or "",
+                "description": ep.get("description") or pinfo.get("description") or "",
+                "qualifiers": r.get("qualifiers") or [],
+                "genres": pinfo.get("genres") or [],
+            }
+            if kind == "series":
+                item["kind"] = "episode"
+                item["episode"] = {
+                    "season": {"kind": "number", "number": ep.get("season_number")} if ep.get("season_number") else {},
+                    "episodeNumber": ep.get("number"),
+                    "originalAirDate": ep.get("orig_air_date"),
+                    "rating": pinfo.get("tv_rating") or "",
+                }
+            elif kind == "movies":
+                item["kind"] = "movieAiring"
+                item["movieAiring"] = {"releaseYear": pinfo.get("release_year"),
+                                       "filmRating": pinfo.get("film_rating") or ""}
+            else:
+                item["kind"] = "sportEvent"
+            out.setdefault(want[ch], []).append(item)
         return out
 
     def airings(self, channel_id, day):

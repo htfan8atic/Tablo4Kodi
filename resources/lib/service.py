@@ -241,17 +241,40 @@ def _refresh_guide(tablo, abort):
     logocache.apply(channels, profile_dir(), style, base_url())
     today = datetime.date.today()
     airings = {}
+    need_device = []
     for c in channels:
         lst = []
-        for d in range(days):
+        # channels found only on the Tablo use the online guide's own name for them, if known
+        gid = c.get("guide_id", c["id"]) if c.get("device_only") else c["id"]
+        for d in range(days if gid else 0):
             if abort():
                 raise Aborted()
             day = (today + datetime.timedelta(days=d)).isoformat()
             try:
-                lst.extend(tablo.airings(c["id"], day) or [])
+                lst.extend(tablo.airings(gid, day) or [])
             except Exception as e:  # one bad channel shouldn't kill the guide
-                log("airings {} {} failed: {}".format(c["id"], day, e), xbmc.LOGWARNING)
+                log("airings {} {} failed: {}".format(gid, day, e), xbmc.LOGWARNING)
+                if c.get("device_only") and d == 0:
+                    break  # the online guide doesn't know this channel; don't ask for every day
         airings[c["id"]] = lst
+        if c.get("device_only") and not lst:
+            need_device.append(c)
+    if need_device:
+        log("no online listings for {}; reading the Tablo's own guide".format(
+            ", ".join(c["number"] for c in need_device)))
+        start = datetime.datetime.now(guide.UTC)
+        try:
+            found = tablo.device_guide(need_device, start, start + datetime.timedelta(days=days),
+                                       abort=abort)
+        except Exception as e:
+            log("reading the Tablo's own guide failed: {}".format(e), xbmc.LOGWARNING)
+            found = {}
+        if abort():
+            raise Aborted()
+        for cid, lst in found.items():
+            airings[cid] = lst
+        log("Tablo's own guide: {} listings for {} of {} channels".format(
+            sum(len(v) for v in found.values()), len(found), len(need_device)))
     pd = profile_dir()
     m3u = guide.build_m3u(channels, base_url())
     try:
