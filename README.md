@@ -61,12 +61,16 @@ The add-on's **Set up IPTV Simple Client** menu item tries to do steps 3–4 for
 | Grid guide | Home → TV → Guide |
 | Recordings (play, protect, delete) | Video add-on → Recordings (use the context menu for actions) |
 | Record a show | Video add-on → Record a show |
-| Record from the guide | TV → Guide → context menu → **Record with Tablo** (see below) |
+| Record from the guide | TV → Guide → **OK** on a future program, or context menu → **Record with Tablo** (see below) |
 | What's scheduled / conflicts | Video add-on → Upcoming recordings |
 | Series being recorded | Video add-on → Series recording rules |
 | Tuners and storage | Video add-on → Tablo status |
 
-**Recording from the TV guide:** in Home → TV → Guide, open the context menu on a program (right-click, press **C**, or long-press OK) and choose **Record with Tablo**. You can record that episode only, new episodes only, or all episodes, or cancel a recording. The menu title shows the airing's day and time, so you can check it picked the right one. Kodi's own *Record* doesn't work for Tablo channels (IPTV Simple can't record); Kodi normally hides it for them. To get the menu with a single click, set Kodi's Settings → PVR & Live TV → Guide → **Default select action** to *Show context menu* (clicking a show that's on now then also opens the menu instead of tuning). Don't set it to *Record*.
+**Recording from the TV guide:** in Home → TV → Guide, highlight a program that hasn't started yet on a Tablo channel and press **OK** (Enter on a keyboard, Select on a remote). The **Record with Tablo** menu opens: record this episode only, new episodes only, or all episodes, or cancel a recording. The menu title shows the airing's day and time, so you can check it picked the right one. Pressing OK on a program that's on now still switches to that channel, and channels from other back-ends (e.g. HDHomeRun) aren't affected. You can also open the context menu on any program (right-click, press **C**, or long-press OK) and choose **Record with Tablo**.
+
+- Leave Kodi's Settings → PVR & Live TV → Guide → **Default select action** at *Switch to channel* (or *Smart select*), so OK on a current program tunes. Don't set it to *Record*: Kodi's own Record doesn't work for Tablo channels (IPTV Simple can't record).
+- A mouse click on a future program keeps Kodi's normal behaviour; use right-click → **Record with Tablo**.
+- To turn OK-to-record off, use the add-on's Settings → *Live TV & guide* → **OK on a future programme in the TV guide records with Tablo**. The add-on adds a small key mapping (`userdata/keymaps/tablo4g_guide.xml`) for this while it's running and removes it when it stops, disabled or uninstalled.
 
 **Guide updates:** the add-on refreshes the guide by itself when Kodi starts and every 6 hours, so there's normally nothing to do. **Refresh TV guide now** in the add-on forces one. The add-on's Settings → *Live TV & guide* also sets how many days of guide to load (up to 14), how often to refresh, and whether to include Tablo's free streaming (FAST) channels.
 

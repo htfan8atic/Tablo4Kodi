@@ -22,7 +22,7 @@ from urllib.parse import urljoin
 import xbmc
 import xbmcgui
 
-from . import guide, logocache
+from . import guide, keymap, logocache
 from .kodiutils import (base_url, get_tablo, log, logo_style, profile_dir, server_port,
                         setting_bool, setting_int)
 from .tablo import TabloError
@@ -336,6 +336,7 @@ def run():
     server.start()
     player = Player(tablo)
     next_refresh = 0
+    keymap.sync(setting_bool("guide_ok_records"))
     try:
         while not monitor.abortRequested():
             if monitor.changed:
@@ -344,6 +345,7 @@ def run():
                 Handler.tablo = tablo
                 player.tablo = tablo
                 next_refresh = 0
+                keymap.sync(setting_bool("guide_ok_records"))
             HOME.setProperty(SERVICE_ALIVE, str(int(time.time())))
             request = HOME.getProperty(REFRESH_REQUEST)
             if request:
@@ -372,5 +374,6 @@ def run():
             if monitor.waitForAbort(1):
                 break
     finally:
+        keymap.sync(False)
         server.stop()
         log("service stopped")

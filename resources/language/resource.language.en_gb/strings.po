@@ -64,3 +64,11 @@ msgstr ""
 msgctxt "#30020"
 msgid "Record with Tablo"
 msgstr ""
+
+msgctxt "#30021"
+msgid "OK on a future programme in the TV guide records with Tablo"
+msgstr ""
+
+msgctxt "#30022"
+msgid "Pressing OK / Enter on a programme that hasn't started yet, on a Tablo channel, opens the Record with Tablo menu. Programmes on now, and other channels, work as usual."
+msgstr ""

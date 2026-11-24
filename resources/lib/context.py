@@ -206,6 +206,51 @@ def _find(tablo, title, chno, hm, date_nums):
     return None, None, None
 
 
+def _tablo_channel_names():
+    """Channel names in the add-on's playlist ('7.1 WJLA' ...)."""
+    try:
+        with open(os.path.join(profile_dir(), "playlist.m3u")) as f:
+            return set(l.rsplit(",", 1)[1].strip() for l in f if l.startswith("#EXTINF") and "," in l)
+    except (IOError, OSError):
+        return set()
+
+
+def _is_future():
+    """True only when the highlighted programme clearly starts later than now (Kodi's clock)."""
+    try:
+        if int(float(_info("Progress") or 0)) > 0:
+            return False  # on now, or already over
+    except ValueError:
+        pass
+    hm, pairs = _wanted_time(), _wanted_date()
+    if not hm or not pairs:
+        return False
+    now = datetime.datetime.now() + datetime.timedelta(minutes=_kodi_skew())
+    years = [int(y) for y in re.findall(r"\b\d{4}\b", _info("StartDate"))] or [now.year]
+    starts = []
+    for m, d in pairs:
+        for y in set(years + [now.year, now.year + 1]):
+            for mm in ([m] if m else [now.month, now.month % 12 + 1]):
+                try:
+                    starts.append(datetime.datetime(y, mm, d, hm[0], hm[1]))
+                except ValueError:
+                    pass
+    if not starts:
+        return False
+    start = min(starts, key=lambda t: abs((t - now).total_seconds()))
+    return start > now
+
+
+def guide_click():
+    """OK / Enter in the TV guide (see keymap.py): Record with Tablo for future programmes on
+    Tablo channels, Kodi's normal action for everything else."""
+    future = (xbmc.getCondVisibility("Window.IsActive(tvguide)") and _info("Title")
+              and _info("ChannelName") in _tablo_channel_names() and _is_future())
+    if not future:
+        return xbmc.executebuiltin("Action(Select)")
+    run()
+
+
 def run():
     title = _info("Title")
     if not title:

@@ -39,6 +39,11 @@
           <default>false</default>
           <control type="toggle"/>
         </setting>
+        <setting id="guide_ok_records" type="boolean" label="30021" help="30022">
+          <level>0</level>
+          <default>true</default>
+          <control type="toggle"/>
+        </setting>
         <setting id="logo_style" type="integer" label="30015">
           <level>0</level>
           <default>0</default>

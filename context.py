@@ -1,4 +1,9 @@
 # -*- coding: utf-8 -*-
+import sys
+
 from resources.lib import context
 
-context.run()
+if len(sys.argv) > 1 and sys.argv[1] == "guideclick":
+    context.guide_click()
+else:
+    context.run()
