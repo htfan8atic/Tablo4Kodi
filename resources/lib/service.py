@@ -8,6 +8,7 @@
 """
 
 import datetime
+import json
 import os
 import re
 import threading
@@ -257,8 +258,21 @@ def _refresh_guide(tablo, abort):
                 if c.get("device_only") and d == 0:
                     break  # the online guide doesn't know this channel; don't ask for every day
         airings[c["id"]] = lst
-        if c.get("device_only") and not lst:
-            need_device.append(c)
+        if c.get("device_only"):
+            # the online guide can answer OK with nothing usable; only count listings that
+            # would actually appear in the guide
+            now = datetime.datetime.now(guide.UTC)
+            usable = 0
+            for a in lst:
+                t = guide.parse_time(a.get("datetime")) if isinstance(a, dict) else None
+                if t and t + datetime.timedelta(seconds=int(a.get("duration") or 0)) > now:
+                    usable += 1
+            if not usable:
+                if lst:
+                    log("online guide gave {} for {} but nothing usable, e.g. {}".format(
+                        gid, c["number"], json.dumps(lst[0])[:400]))
+                airings[c["id"]] = []
+                need_device.append(c)
     if need_device:
         log("no online listings for {}; reading the Tablo's own guide".format(
             ", ".join(c["number"] for c in need_device)))

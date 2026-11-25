@@ -352,14 +352,18 @@ class Tablo(object):
             cid = str(r.get("identifier") or r.get("object_id") or path.rstrip("/").rsplit("/", 1)[-1])
             call = info.get("call_sign") or info.get("callSign") or "{}.{}".format(major, minor)
             station = str(info.get("tms_station_id") or info.get("station_id") or "").strip()
+            # the online guide's id for the channel: given on newer firmware as
+            # channel_identifier, else built as S<station>_<major>_<minor> (2.1 -> S19586_002_01)
+            gid = str(info.get("channel_identifier") or r.get("channel_identifier") or "")
+            if not gid and station.isdigit():
+                gid = "S{}_{:03d}_{:02d}".format(station, major, minor)
+            logos = pick_logos(info.get("logos") or r.get("logos") or [])
             out.append({
                 "id": cid, "kind": "ota", "major": major, "minor": minor,
                 "number": "{}.{}".format(major, minor), "call_sign": call,
                 "network": info.get("network") or "", "name": call,
-                "logo": "", "logos": [], "path": path, "device_only": True,
-                # Tablo's online guide names channels S<station>_<major>_<minor>
-                # (2.1 on station 19586 is S19586_002_01); try that for listings
-                "guide_id": "S{}_{:03d}_{:02d}".format(station, major, minor) if station.isdigit() else "",
+                "logo": logos[0] if logos else "", "logos": logos, "path": path,
+                "device_only": True, "guide_id": gid,
             })
             if len(out) == 1:
                 self.logger("Tablo channel record example: {}".format(json.dumps(r)[:600]))
@@ -399,10 +403,10 @@ class Tablo(object):
             except TabloError:
                 pass
         recs = {}
-        for i in range(0, len(airing_paths), 200):
+        for i in range(0, len(airing_paths), 50):
             if abort and abort():
                 return {}
-            recs.update(self.batch([a for _, a in airing_paths[i:i + 200]]))
+            recs.update(self.batch([a for _, a in airing_paths[i:i + 50]]))
         parent_recs = self.batch([p for _, p, _ in parents]) if parents else {}
         out = {}
         for kind, a in airing_paths:
