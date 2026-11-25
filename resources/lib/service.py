@@ -164,12 +164,12 @@ class Server(object):
         self.httpd.server_close()
 
 
-def reload_iptv_simple():
-    """IPTV Simple reads the channel list once at startup. When channels or logos change,
+def reload_iptv_simple(why="channel list changed"):
+    """IPTV Simple reads the channel list and guide once at startup. When they change,
     restart it so Kodi shows them now instead of after the next Kodi restart."""
     if not xbmc.getCondVisibility("System.AddonIsEnabled(pvr.iptvsimple)"):
         return
-    log("channel list changed; reloading IPTV Simple")
+    log("{}; reloading IPTV Simple".format(why))
     for enabled in ("false", "true"):
         xbmc.executeJSONRPC('{"jsonrpc":"2.0","id":1,"method":"Addons.SetAddonEnabled",'
                             '"params":{"addonid":"pvr.iptvsimple","enabled":%s}}' % enabled)
@@ -213,12 +213,12 @@ def _lock(wait=120):
             xbmc.sleep(500)
 
 
-def refresh_guide(tablo, wait=120, abort=None):
+def refresh_guide(tablo, wait=120, abort=None, force_reload=False):
     """abort: callable returning True when Kodi wants us to stop; checked between requests
     so an add-on update never has to wait for a full guide download."""
     path = _lock(wait)
     try:
-        return _refresh_guide(tablo, abort or (lambda: False))
+        return _refresh_guide(tablo, abort or (lambda: False), force_reload)
     finally:
         try:
             os.remove(path)
@@ -226,7 +226,7 @@ def refresh_guide(tablo, wait=120, abort=None):
             pass
 
 
-def _refresh_guide(tablo, abort):
+def _refresh_guide(tablo, abort, force_reload=False):
     """Fetch channels + airings and write M3U / XMLTV into the profile folder."""
     include_fast = setting_bool("include_fast")
     days = max(1, min(14, setting_int("guide_days", 3)))
@@ -295,15 +295,35 @@ def _refresh_guide(tablo, abort):
         with open(os.path.join(pd, M3U), encoding="utf-8") as f:
             m3u_changed = f.read() != m3u
     except (IOError, OSError):
-        m3u_changed = False  # first run: IPTV Simple hasn't been set up against it yet
+        m3u_changed = None  # first run: IPTV Simple hasn't been set up against it yet
     for name, data in ((M3U, m3u), (EPG, guide.build_xmltv(channels, airings))):
         tmp = os.path.join(pd, "{}.{}.{}.tmp".format(name, os.getpid(), threading.get_ident()))
         with open(tmp, "w", encoding="utf-8") as f:
             f.write(data)
         os.replace(tmp, os.path.join(pd, name))
     log("guide refreshed: {} channels, {} days".format(len(channels), days))
+    # listings per channel added from the Tablo's own list, for troubleshooting
+    extra = ["{}={}".format(c["number"], len(airings.get(c["id"]) or [])) for c in channels
+             if c.get("device_only")]
+    if extra:
+        log("listings for channels added from the Tablo: " + ", ".join(extra))
+    # IPTV Simple may have read an older guide (e.g. at Kodi startup, before this refresh
+    # finished). Reload it when the set of channels that have listings changes, too.
+    covered = sorted(c["id"] for c in channels if airings.get(c["id"]))
+    cov_file = os.path.join(pd, "guide_coverage.json")
+    try:
+        with open(cov_file) as f:
+            cov_changed = json.load(f) != covered
+    except (IOError, OSError, ValueError):
+        cov_changed = m3u_changed is not None
+    with open(cov_file, "w") as f:
+        json.dump(covered, f)
     if m3u_changed:
         reload_iptv_simple()
+    elif force_reload and not xbmc.Player().isPlaying():
+        reload_iptv_simple("guide refresh requested")
+    elif cov_changed and not xbmc.Player().isPlaying():
+        reload_iptv_simple("channels with guide listings changed")
     return len(channels)
 
 
@@ -392,7 +412,8 @@ def run():
                 if tablo.email and tablo.password:
                     try:
                         log("refreshing guide...")
-                        n = refresh_guide(tablo, abort=monitor.abortRequested)
+                        n = refresh_guide(tablo, abort=monitor.abortRequested,
+                                          force_reload=bool(request))
                         next_refresh = time.time() + 3600 * max(1, setting_int("refresh_hours", 6))
                         result = str(n)
                     except Aborted:

@@ -498,7 +498,7 @@ def refresh(tablo):
     except ValueError:
         alive = False
     if not alive:
-        n = refresh_guide(tablo)
+        n = refresh_guide(tablo, force_reload=True)
         return notify("Guide refreshed ({} channels)".format(n))
     token = str(time.time())
     HOME.clearProperty(REFRESH_DONE)
