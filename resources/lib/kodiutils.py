@@ -19,8 +19,9 @@ def setting(key):
     return addon().getSetting(key)
 
 
-def setting_bool(key):
-    return addon().getSetting(key).lower() == "true"
+def setting_bool(key, default=False):
+    v = addon().getSetting(key).lower()
+    return default if v == "" else v == "true"
 
 
 def setting_int(key, default=0):

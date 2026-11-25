@@ -13,7 +13,7 @@ import xbmcaddon
 import xbmcgui
 import xbmcplugin
 
-from . import guide, logocache
+from . import fallbacklogos, guide, logocache
 from .kodiutils import addon, base_url, get_tablo, log, logo_style, notify, profile_dir
 from .service import (PLAYING_PROP, REFRESH_DONE, REFRESH_REQUEST, SERVICE_ALIVE,
                       refresh_guide)
@@ -84,7 +84,10 @@ def root():
 # ---------------------------------------------------------------- live
 def channels(tablo):
     from .kodiutils import setting_bool
-    chans = logocache.apply(tablo.channels(include_fast=setting_bool("include_fast")),
+    chans = tablo.channels(include_fast=setting_bool("include_fast"))
+    if setting_bool("backup_logos", True):
+        fallbacklogos.add(chans)
+    chans = logocache.apply(chans,
                             profile_dir(), logo_style(), base_url())
     for c in chans:
         label = "{} {}".format(c["number"], c["call_sign"]).strip()

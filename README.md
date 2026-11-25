@@ -76,10 +76,13 @@ The add-on's **Set up IPTV Simple Client** menu item tries to do steps 3–4 for
 
 **Channel logos:** by default the add-on shows each channel's logo as Tablo supplies it (the full-color versions the Tablo apps use, falling back to another version when one is missing). Under the add-on's Settings → *Live TV & guide* → **Channel logos** you can instead choose *Same size* (trimmed and resized so they line up) or *Same size, white* (white logos vanish on light skins). When the logos change, the add-on reloads IPTV Simple so Kodi shows them right away.
 
+**Backup logos:** Tablo has no logo for many subchannels (Buzzr, MeTV, Comet, Create, …). For those, and for channels whose Tablo logo links are broken, the add-on uses a logo from the community [tv-logos](https://github.com/tv-logo/tv-logos) collection by tv-logo, free for personal use, matching on the channel's name (and on its network for a station's main channel only). Subchannels named only by a station code (e.g. WSBDT4) stay blank rather than show the wrong logo. Turn this off under Settings → *Live TV & guide* → **Backup logos**. To set a logo yourself: Kodi Settings → PVR & Live TV → General → Channel manager → the channel → Channel icon.
+
 ## Troubleshooting
 
 | Symptom | Fix |
 |---|---|
+| Guide rows stay empty after the add-on has listings | Kodi keeps its own copy of the guide. Settings → PVR & Live TV → Guide → **Clear data**; Kodi reloads it from the add-on in a few seconds. Recordings and channels aren't affected. |
 | A channel the Tablo app shows is missing in Kodi | The add-on adds channels from the Tablo's own scan when Tablo's online lineup lacks them. Run **Refresh TV guide now**; if it's still missing, rescan channels in the Tablo app, then refresh again. The add-on gets listings and logos for these channels from the details your Tablo stores, using Tablo's online guide where it has listings and the guide stored on your Tablo otherwise. |
 | "Playback failed" / "Can't reach the Tablo" | Check the IP override (the Tablo's current IP), run Test connection |
 | Tablo on LAN: Authentication failure | Enter just the IP, or `IP:8887` |

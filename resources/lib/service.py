@@ -23,7 +23,7 @@ from urllib.parse import urljoin
 import xbmc
 import xbmcgui
 
-from . import guide, keymap, logocache
+from . import fallbacklogos, guide, keymap, logocache
 from .kodiutils import (base_url, get_tablo, log, logo_style, profile_dir, server_port,
                         setting_bool, setting_int)
 from .tablo import TabloError
@@ -231,6 +231,8 @@ def _refresh_guide(tablo, abort, force_reload=False):
     include_fast = setting_bool("include_fast")
     days = max(1, min(14, setting_int("guide_days", 3)))
     channels = tablo.channels(include_fast=include_fast)
+    if setting_bool("backup_logos", True):
+        fallbacklogos.add(channels, log)
     from .tablo import LOGO_KINDS_SEEN
     log("logo versions offered by Tablo: {}".format(", ".join(sorted(LOGO_KINDS_SEEN)) or "none"))
     style = logo_style()
