@@ -1,7 +1,7 @@
 # Tablo 4th Gen Video & PVR Add-on for Kodi (Unofficial)
 
-**[⬇ Download the latest release](https://github.com/htfan8atic/Tablo4Kodi/releases/latest)** (v1.1.0 beta) ·
-[Setup](#setup) · [What's new](#whats-new-in-110) · [Troubleshooting](#troubleshooting) ·
+**[⬇ Download the latest release](https://github.com/htfan8atic/Tablo4Kodi/releases/latest)** (v1.2.0 beta) ·
+[Setup](#setup) · [What's new](#whats-new-in-120) · [Troubleshooting](#troubleshooting) ·
 [Report a problem](https://github.com/htfan8atic/Tablo4Kodi/issues)
 
 Watch live TV, browse a full grid TV guide, record and manage recordings from a **Tablo 4th Gen** DVR, all inside Kodi.
@@ -12,7 +12,7 @@ Watch live TV, browse a full grid TV guide, record and manage recordings from a 
 
 **Requirements:** Kodi 19 or newer (tested on Kodi 22 for Windows and LibreELEC), a Tablo 4th Gen already set up in the official Tablo app, and the Kodi device on the same home network as the Tablo. Older (2nd/3rd Gen) Tablos aren't supported.
 
-## What's new in 1.1.0
+## What's new in 1.2.0
 
 - **Record with OK in the guide.** Press OK on a future program on a Tablo channel to open **Record with Tablo** directly. OK on a program that's on now still tunes to it.
 - **Reliable guide recording.** Record with Tablo now finds future airings and movies, puts **Record this episode only** first, and shows the airing's day and time.
